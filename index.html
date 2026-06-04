@@ -165,7 +165,7 @@ body { background: #f5f5f4; color: #1c1c1a; }
   <div class="modal">
     <h3 id="modal-title">New Order</h3>
     <div class="form-row"><label id="lbl-name">Customer Name</label><input type="text" id="f-name" placeholder="Ahmed Al-Mannai"></div>
-    <div class="form-row"><label id="lbl-phone">WhatsApp Number</label><input type="text" id="f-phone" placeholder="+974 5xxx xxxx"></div>
+    <div class="form-row"><label id="lbl-phone">WhatsApp Number</label><input type="text" id="f-phone" placeholder="5xxx xxxx"></div>
     <div class="form-row"><label id="lbl-items">Items</label><input type="text" id="f-items" placeholder="2x Thoob, 1x Qotraa"></div>
     <div class="form-row">
       <label id="lbl-type">Service Type</label>
@@ -455,8 +455,17 @@ function handleBackdropClick(e){ if(e.target===document.getElementById('modal'))
 function openModal(){ document.getElementById('modal').classList.add('open'); updatePipelinePreview(); }
 function closeModal(){ document.getElementById('modal').classList.remove('open'); ['f-name','f-phone','f-items'].forEach(id=>document.getElementById(id).value=''); }
 
+function formatPhone(p){
+  p = p.replace(/\s/g,'');
+  if(p.startsWith('+')) return p;
+  if(p.startsWith('00')) return '+'+p.slice(2);
+  if(p.startsWith('974')) return '+'+p;
+  return '+974'+p;
+}
+
 async function addOrder(){
-  const name=document.getElementById('f-name').value.trim(),phone=document.getElementById('f-phone').value.trim(),items=document.getElementById('f-items').value.trim();
+  const name=document.getElementById('f-name').value.trim(),rawPhone=document.getElementById('f-phone').value.trim(),items=document.getElementById('f-items').value.trim();
+  const phone=formatPhone(rawPhone);
   if(!name||!phone||!items){showToast('Please fill all fields',true);return;}
   const btn=document.getElementById('btn-submit');btn.disabled=true;btn.textContent='...';
   const now=new Date(),time=now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0');
