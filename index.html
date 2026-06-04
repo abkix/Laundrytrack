@@ -434,8 +434,7 @@ async function advanceOrder(id){
     // Only send WhatsApp when order is Ready
     if(newStatus === 'Ready'){
       const laundryName = await getLaundryName();
-      const trackUrl = `${window.location.origin}/track.html?token=${o.tracking_token}`;
-      const readyMsg = `*${laundryName}* 🧺\n\n✅ Hi ${o.customer_name}! Your clothes are ready for collection.\nOrder: #${String(o.id).padStart(3,'0')} | ${o.items}\n\n✅ ملابسك جاهزة للاستلام!\n\n${trackUrl}`;
+      const readyMsg = `*${laundryName}* 🧺\n\n✅ Hi ${o.customer_name}! Your clothes are ready for collection. Please come pick them up.\nOrder: #${String(o.id).padStart(3,'0')} | ${o.items}\n\n✅ ملابسك جاهزة للاستلام، تفضل باستلامها.`;
       await sendWhatsAppMsg(o.phone, readyMsg);
     }
   }
