@@ -442,20 +442,6 @@ async function advanceOrder(id){
   catch{showToast('Failed to update.',true);}
 }
 
-Order: #${String(o.id).padStart(3,'0')} | ${o.items}
-
-${AR_STATUS_MSG[status] || ''}`;
-  try {
-    await fetch('/api/send-whatsapp', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ to: o.phone, message: msg })
-    });
-  } catch(e) {
-    console.log('WhatsApp send failed:', e);
-  }
-}
-
 function showToast(msg,isError){
   const t=document.getElementById('toast');
   document.getElementById('toast-msg').textContent=msg;
