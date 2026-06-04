@@ -326,6 +326,14 @@ async function saveOrder(o) {
   return (await res.json())[0];
 }
 
+async function getLaundryName() {
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/laundries?user_id=eq.${currentUser.id}`, { headers: getAuthHeaders() });
+    const data = await res.json();
+    return data.length ? data[0].name : 'Washly Laundry';
+  } catch { return 'Washly Laundry'; }
+}
+
 async function updateStatusIdx(id, idx) {
   const res = await fetch(`${SUPABASE_URL}/rest/v1/orders?id=eq.${id}`, {
     method: 'PATCH',
@@ -423,8 +431,13 @@ async function advanceOrder(id){
     o.status_idx=newIdx;
     showToast('Status updated!',false);
     updateMetrics();renderOrders();
-    // Send WhatsApp notification
-    await sendWhatsApp(o, newStatus);
+    // Only send WhatsApp when order is Ready
+    if(newStatus === 'Ready'){
+      const laundryName = await getLaundryName();
+      const trackUrl = `${window.location.origin}/track.html?token=${o.tracking_token}`;
+      const readyMsg = `*${laundryName}* 🧺\n\n✅ Hi ${o.customer_name}! Your clothes are ready for collection.\nOrder: #${String(o.id).padStart(3,'0')} | ${o.items}\n\n✅ ملابسك جاهزة للاستلام!\n\n${trackUrl}`;
+      await sendWhatsAppMsg(o.phone, readyMsg);
+    }
   }
   catch{showToast('Failed to update.',true);}
 }
@@ -492,6 +505,11 @@ async function addOrder(){
   try{
     const saved=await saveOrder({customer_name:name,phone,items,service:document.getElementById('f-type').value,collection:document.getElementById('f-collection').value,priority:document.getElementById('f-priority').value,status_idx:0,order_time:time});
     orders.unshift(saved);closeModal();showToast('Order saved!',false);updateMetrics();renderOrders();
+    // Send welcome WhatsApp with tracking link
+    const laundryName = await getLaundryName();
+    const trackUrl = `${window.location.origin}/track.html?token=${saved.tracking_token}`;
+    const welcomeMsg = `*${laundryName}* 🧺\n\nHello ${name}! We have received your order.\nItems: ${items}\n\nTrack your order live here:\n${trackUrl}\n\nمرحباً ${name}! استلمنا طلبك. تابع حالة طلبك من الرابط أعلاه.`;
+    await sendWhatsAppMsg(phone, welcomeMsg);
   }catch(e){showToast('Failed to save: '+e.message,true);}
   finally{btn.disabled=false;btn.textContent=lang==='ar'?'إضافة الطلب':'Add Order';}
 }
