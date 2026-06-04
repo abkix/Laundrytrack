@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#4A9FD4">
+<title>Track Your Order — Washly</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
+body { background: linear-gradient(160deg, #e8f3fb 0%, #f5f5f4 100%); min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 2rem 1rem; }
+.header { display: flex; align-items: center; gap: 10px; margin-bottom: 2rem; }
+.header img { width: 40px; height: 40px; border-radius: 10px; }
+.header-text { font-size: 20px; font-weight: 600; color: #4A9FD4; }
+.card { background: #fff; border-radius: 16px; border: 0.5px solid #e0e0de; padding: 1.5rem; width: 100%; max-width: 420px; box-shadow: 0 4px 24px rgba(0,0,0,0.07); }
+.order-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.25rem; padding-bottom: 1.25rem; border-bottom: 0.5px solid #eee; }
+.order-num { font-size: 13px; color: #888; margin-bottom: 2px; }
+.order-name { font-size: 18px; font-weight: 600; }
+.order-items { font-size: 13px; color: #555; margin-top: 3px; }
+.urgent-badge { font-size: 11px; padding: 3px 10px; background: #FCEBEB; color: #A32D2D; border-radius: 20px; font-weight: 500; white-space: nowrap; }
+.laundry-name { font-size: 13px; color: #888; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 6px; }
+.progress-section { margin-bottom: 1.5rem; }
+.progress-title { font-size: 12px; color: #888; margin-bottom: 1rem; }
+.steps { display: flex; flex-direction: column; gap: 0; }
+.step-row { display: flex; align-items: flex-start; gap: 12px; }
+.step-left { display: flex; flex-direction: column; align-items: center; }
+.step-circle { width: 32px; height: 32px; border-radius: 50%; border: 2px solid #ddd; display: flex; align-items: center; justify-content: center; font-size: 14px; background: #fff; flex-shrink: 0; }
+.step-circle.done { background: #4A9FD4; border-color: #4A9FD4; color: #fff; }
+.step-circle.active { background: #E6F1FB; border-color: #4A9FD4; color: #4A9FD4; animation: pulse 2s infinite; }
+.step-line { width: 2px; height: 32px; background: #eee; margin: 2px 0; }
+.step-line.done { background: #4A9FD4; }
+.step-content { padding: 4px 0 28px 0; }
+.step-name { font-size: 14px; font-weight: 500; color: #888; }
+.step-name.done { color: #4A9FD4; }
+.step-name.active { color: #1A5F8A; font-weight: 600; }
+.step-status { font-size: 12px; color: #aaa; margin-top: 2px; }
+.step-status.active { color: #4A9FD4; }
+@keyframes pulse { 0%,100%{box-shadow:0 0 0 0 rgba(74,159,212,0.3)} 50%{box-shadow:0 0 0 8px rgba(74,159,212,0)} }
+.current-status { background: #E6F1FB; border-radius: 10px; padding: 1rem; text-align: center; margin-bottom: 1.25rem; }
+.current-status-label { font-size: 12px; color: #888; margin-bottom: 4px; }
+.current-status-value { font-size: 18px; font-weight: 600; color: #1A5F8A; }
+.current-status-ar { font-size: 14px; color: #4A9FD4; margin-top: 2px; direction: rtl; }
+.footer { font-size: 12px; color: #aaa; text-align: center; margin-top: 1rem; }
+.footer a { color: #4A9FD4; text-decoration: none; }
+.loading { text-align: center; padding: 3rem; color: #888; }
+.spinner { display: inline-block; width: 20px; height: 20px; border: 2px solid #ddd; border-top-color: #4A9FD4; border-radius: 50%; animation: spin 0.7s linear infinite; vertical-align: middle; margin-right: 8px; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.error { text-align: center; padding: 3rem; color: #A32D2D; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <img src="/icon-192.png">
+  <div class="header-text">Washly</div>
+</div>
+
+<div class="card" id="card">
+  <div class="loading"><span class="spinner"></span> Loading your order...</div>
+</div>
+
+<div class="footer">Powered by <a href="/">Washly</a> — Laundry Management System</div>
+
+<script>
+const SUPABASE_URL = 'https://ejmgiybyqqzbtylhgviq.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_iTZMaKFvYbZZX9kzOwB7gQ_KS9AlTBy';
+
+const SERVICE_PIPELINES = {
+  wash_iron: ['Received','Washing','Ironing','Ready'],
+  wash_only: ['Received','Washing','Ready'],
+  iron_only: ['Received','Ironing','Ready'],
+  dry_clean: ['Received','Dry Cleaning','Ready'],
+};
+const COLLECTION_STEP = { collect: 'Collected', delivery: 'Delivered' };
+const STEP_ICONS = { 'Received':'📥','Washing':'💧','Ironing':'♨️','Dry Cleaning':'👕','Ready':'✅','Collected':'🛍','Delivered':'🚚' };
+const AR_STATUS = { 'Received':'استُلم','Washing':'جاري الغسيل','Ironing':'جاري الكوي','Dry Cleaning':'جاري التنظيف الجاف','Ready':'جاهز للاستلام','Collected':'تم الاستلام','Delivered':'تم التوصيل' };
+
+function getPipeline(s, c) { return [...SERVICE_PIPELINES[s], COLLECTION_STEP[c]]; }
+
+async function loadOrder() {
+  const params = new URLSearchParams(window.location.search);
+  const token = params.get('token');
+  if (!token) { showError('Invalid tracking link.'); return; }
+
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/orders?tracking_token=eq.${token}`, {
+      headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY }
+    });
+    const data = await res.json();
+    if (!data.length) { showError('Order not found. Please check your link.'); return; }
+    renderOrder(data[0]);
+  } catch {
+    showError('Could not load order. Please try again.');
+  }
+}
+
+function renderOrder(o) {
+  const pipe = getPipeline(o.service, o.collection);
+  const currentStatus = pipe[o.status_idx];
+  const isDone = o.status_idx >= pipe.length - 1;
+
+  const stepsHtml = pipe.map((s, i) => {
+    const done = i < o.status_idx;
+    const active = i === o.status_idx;
+    const isLast = i === pipe.length - 1;
+    const icon = STEP_ICONS[s] || '•';
+    return `
+      <div class="step-row">
+        <div class="step-left">
+          <div class="step-circle ${done?'done':active?'active':''}">${done?'✓':icon}</div>
+          ${!isLast ? `<div class="step-line ${done?'done':''}"></div>` : ''}
+        </div>
+        <div class="step-content">
+          <div class="step-name ${done?'done':active?'active':''}">${s}</div>
+          <div class="step-status ${active?'active':''}">${active ? '● In progress' : done ? 'Completed' : 'Waiting'}</div>
+        </div>
+      </div>`;
+  }).join('');
+
+  document.getElementById('card').innerHTML = `
+    <div class="order-header">
+      <div>
+        <div class="order-num">Order #${String(o.id).padStart(3,'0')} · ${o.order_time}</div>
+        <div class="order-name">${o.customer_name}</div>
+        <div class="order-items">${o.items}</div>
+      </div>
+      ${o.priority === 'urgent' ? '<span class="urgent-badge">URGENT</span>' : ''}
+    </div>
+    <div class="laundry-name">🏪 ${o.service.replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase())} · ${o.collection === 'collect' ? 'Collect from shop' : 'Delivery'}</div>
+    <div class="current-status">
+      <div class="current-status-label">Current Status</div>
+      <div class="current-status-value">${currentStatus} ${STEP_ICONS[currentStatus]||''}</div>
+      <div class="current-status-ar">${AR_STATUS[currentStatus]||''}</div>
+    </div>
+    <div class="progress-section">
+      <div class="progress-title">Order Progress</div>
+      <div class="steps">${stepsHtml}</div>
+    </div>
+  `;
+}
+
+function showError(msg) {
+  document.getElementById('card').innerHTML = `<div class="error">❌ ${msg}</div>`;
+}
+
+loadOrder();
+// Auto refresh every 30 seconds
+setInterval(loadOrder, 30000);
+</script>
+</body>
+</html>
