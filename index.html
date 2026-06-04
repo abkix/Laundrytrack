@@ -514,6 +514,18 @@ async function addOrder(){
   finally{btn.disabled=false;btn.textContent=lang==='ar'?'إضافة الطلب':'Add Order';}
 }
 
+async function sendWhatsAppMsg(phone, message){
+  try {
+    await fetch('/api/send-whatsapp', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ to: phone, message })
+    });
+  } catch(e) {
+    console.log('WhatsApp send failed:', e);
+  }
+}
+
 function updateTime(){ document.getElementById('lbl-time').textContent=new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}); }
 updateTime(); setInterval(updateTime,30000);
 
