@@ -328,7 +328,7 @@ async function saveOrder(o) {
 
 async function getLaundryName() {
   try {
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/laundries?user_id=eq.${currentUser.id}`, { headers: getAuthHeaders() });
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/laundries?email=eq.${encodeURIComponent(currentUser.email)}`, { headers: getAuthHeaders() });
     const data = await res.json();
     return data.length ? data[0].name : 'Washly Laundry';
   } catch { return 'Washly Laundry'; }
@@ -441,27 +441,6 @@ async function advanceOrder(id){
   }
   catch{showToast('Failed to update.',true);}
 }
-
-async function sendWhatsApp(o, status){
-  const AR_STATUS_MSG = {
-    'Washing': 'يتم الآن غسل ملابسك',
-    'Ironing': 'يتم الآن كي ملابسك',
-    'Dry Cleaning': 'يتم الآن تنظيف ملابسك',
-    'Ready': 'ملابسك جاهزة للاستلام! 🎉',
-    'Collected': 'شكراً لك! تم استلام ملابسك.',
-    'Delivered': 'تم توصيل ملابسك. شكراً لاختيارك Washly! 🚚',
-  };
-  const EN_STATUS_MSG = {
-    'Washing': 'Your clothes are now being washed. 👕💧',
-    'Ironing': 'Your clothes are now being ironed. 👕♨️',
-    'Dry Cleaning': 'Your clothes are now being dry cleaned. 👕',
-    'Ready': 'Great news! Your clothes are ready for collection. 🎉',
-    'Collected': 'Thank you! Your clothes have been collected.',
-    'Delivered': 'Your clothes have been delivered. Thank you for choosing Washly! 🚚',
-  };
-  const msg = `*Washly* 🧺
-
-Hi ${o.customer_name}! ${EN_STATUS_MSG[status] || 'Your order has been updated.'}
 
 Order: #${String(o.id).padStart(3,'0')} | ${o.items}
 
