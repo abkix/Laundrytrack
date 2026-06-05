@@ -119,28 +119,34 @@ footer a { color: #4A9FD4; text-decoration: none; }
     <div class="nav-logo-text">Washly</div>
   </div>
   <div class="nav-links">
-    <a href="#features">Features</a>
-    <a href="#how">How it works</a>
+    <a href="#features" id="nav-features">Features</a>
+    <a href="#how" id="nav-how">How it works</a>
     
   </div>
-  <a href="https://wa.me/97466337779?text=Hi%20Washly!%20I'm%20interested%20in%20your%20system." class="nav-cta" target="_blank">Get Started</a>
+  <div style="display:flex;align-items:center;gap:10px;">
+    <div style="display:flex;gap:4px;">
+      <button onclick="setLang('en')" id="btn-en" style="padding:4px 10px;font-size:12px;border:0.5px solid #ccc;border-radius:6px;background:#f0f0ee;font-weight:500;cursor:pointer;">EN</button>
+      <button onclick="setLang('ar')" id="btn-ar" style="padding:4px 10px;font-size:12px;border:0.5px solid #ccc;border-radius:6px;background:transparent;cursor:pointer;">AR</button>
+    </div>
+    <a href="https://wa.me/97466337779?text=Hi%20Washly!%20I'm%20interested%20in%20your%20system." class="nav-cta" target="_blank" id="nav-cta-btn">Get Started</a>
+  </div>
 </nav>
  
 <!-- HERO -->
 <section class="hero">
-  <div class="hero-badge">🇶🇦 Made for Qatar Laundries</div>
+  <div class="hero-badge" id="hero-badge">🇶🇦 Made for Qatar Laundries</div>
   <h1>Stop customers calling.<br><span>Start sending updates.</span></h1>
-  <p class="hero-sub">Washly automatically notifies your customers on WhatsApp when their clothes are ready — so your staff can focus on work, not phone calls.</p>
-  <p class="hero-ar">وقّف مكالمات العملاء. ابدأ بإرسال تحديثات واتساب تلقائية.</p>
+  <p class="hero-sub" id="hero-sub">Washly automatically notifies your customers on WhatsApp when their clothes are ready — so your staff can focus on work, not phone calls.</p>
+  <p class="hero-ar" id="hero-ar">وقّف مكالمات العملاء. ابدأ بإرسال تحديثات واتساب تلقائية.</p>
   <div class="hero-btns">
     <a href="https://wa.me/97466337779?text=Hi%20Washly!%20I'm%20interested%20in%20your%20system." class="btn-primary" target="_blank">📱 WhatsApp Us</a>
-    <a href="#how" class="btn-secondary">See How It Works</a>
+    <a href="#how" class="btn-secondary" id="hero-btn2">See How It Works</a>
   </div>
   <div class="hero-img">
     <div class="phone-mockup">
       <div class="phone-screen">
         <div class="mock-order">
-          <div class="mock-name">Ahmed Al-Mannai</div>
+          <div class="mock-name">Ahmed</div>
           <div class="mock-items">2x Thoob · Wash & Iron</div>
           <div class="mock-steps">
             <div class="mock-dot done">✓</div>
@@ -163,84 +169,84 @@ footer a { color: #4A9FD4; text-decoration: none; }
  
 <!-- PAIN -->
 <section class="pain" id="pain">
-  <h2>Sound familiar? 😅</h2>
-  <p class="pain-sub">Every laundry in Qatar faces these problems every single day.</p>
+  <h2 id="pain-h2">Sound familiar? 😅</h2>
+  <p class="pain-sub" id="pain-sub">Every laundry in Qatar faces these problems every single day.</p>
   <div class="pain-cards">
     <div class="pain-card">
       <div class="pain-card-icon">📞</div>
-      <h3>"Is my thoob ready?"</h3>
-      <p>Customers call every hour asking about their order. Staff waste time answering the same question.</p>
+      <h3 id="pain1-h">"Is my thoob ready?"</h3>
+      <p id="pain1-p">Customers call every hour asking about their order. Staff waste time answering the same question.</p>
     </div>
     <div class="pain-card">
       <div class="pain-card-icon">😤</div>
-      <h3>Frustrated customers</h3>
-      <p>Customers come to collect and their clothes aren't ready yet — because nobody told them it was delayed.</p>
+      <h3 id="pain2-h">Frustrated customers</h3>
+      <p id="pain2-p">Customers come to collect and their clothes aren't ready yet — because nobody told them it was delayed.</p>
     </div>
     <div class="pain-card">
       <div class="pain-card-icon">📋</div>
-      <h3>No order tracking</h3>
-      <p>Staff don't know which orders are ready and which are still being processed without checking manually.</p>
+      <h3 id="pain3-h">No order tracking</h3>
+      <p id="pain3-p">Staff don't know which orders are ready and which are still being processed without checking manually.</p>
     </div>
   </div>
 </section>
  
 <!-- SOLUTION -->
 <section class="solution" id="features">
-  <h2>Washly solves all of this</h2>
-  <p class="solution-sub">A simple system designed specifically for Qatar laundries.</p>
+  <h2 id="sol-h2">Washly solves all of this</h2>
+  <p class="solution-sub" id="sol-sub">A simple system designed specifically for Qatar laundries.</p>
   <div class="features">
     <div class="feature">
       <div class="feature-icon">💬</div>
-      <h3>WhatsApp Notifications</h3>
-      <p>Customers automatically receive a WhatsApp message when their order is received and when it's ready.</p>
+      <h3 id="f1-h">WhatsApp Notifications</h3>
+      <p id="f1-p">Customers automatically receive a WhatsApp message when their order is received and when it's ready.</p>
     </div>
     <div class="feature">
       <div class="feature-icon">📍</div>
-      <h3>Live Order Tracking</h3>
-      <p>Customers get a link to track their order status live — no app download needed.</p>
+      <h3 id="f2-h">Live Order Tracking</h3>
+      <p id="f2-p">Customers get a link to track their order status live — no app download needed.</p>
     </div>
     <div class="feature">
       <div class="feature-icon">📊</div>
-      <h3>Staff Dashboard</h3>
-      <p>Simple tablet-friendly dashboard. Staff update order status with one tap. Works on any device.</p>
+      <h3 id="f3-h">Staff Dashboard</h3>
+      <p id="f3-p">Simple tablet-friendly dashboard. Staff update order status with one tap. Works on any device.</p>
     </div>
     <div class="feature">
       <div class="feature-icon">🇸🇦</div>
       <h3>Arabic & English</h3>
-      <p>Full Arabic and English support. Messages sent to customers in both languages.</p>
+      <p id="f4-p">Full Arabic and English support. Messages sent to customers in both languages.</p>
     </div>
     <div class="feature">
       <div class="feature-icon">📱</div>
-      <h3>Works Like an App</h3>
-      <p>Install on any phone or tablet with one tap. No app store needed. Works offline too.</p>
+      <h3 id="f5-h">Works Like an App</h3>
+      <p id="f5-p">Install on any phone or tablet with one tap. No app store needed. Works offline too.</p>
     </div>
     <div class="feature">
       <div class="feature-icon">⚡</div>
-      <h3>Ready in Minutes</h3>
-      <p>We set everything up for you. Your staff will be trained and ready in under 30 minutes.</p>
+      <h3 id="f6-h">Ready in Minutes</h3>
+      <p id="f6-p">We set everything up for you. Your staff will be trained and ready in under 30 minutes.</p>
     </div>
   </div>
 </section>
  
 <!-- HOW -->
 <section class="how" id="how">
-  <h2>How it works</h2>
-  <p class="how-sub">Three simple steps. No technical knowledge needed.</p>
+  <h2 id="how-h2">How it works</h2>
+  <p class="how-sub" id="how-sub">Three simple steps. No technical knowledge needed.</p>
   <div class="steps">
     <div class="how-step">
       <div class="step-num">1</div>
-      <h3>Customer drops clothes</h3>
-      <p>Staff enters the order in Washly — takes 30 seconds. Customer's phone number is saved.</p>
+      <h3 id="s1-h">Customer drops clothes</h3>
+      <p id="s1-p">Staff enters the order in Washly — takes 30 seconds. Customer's phone number is saved.</p>
     </div>
     <div class="how-step">
       <div class="step-num">2</div>
-      <h3>Customer gets a WhatsApp</h3>
-      <p>Automatically. "We received your order. Track it here." Customer relaxes and stops calling.</p>
+      <h3 id="s2-h">Customer gets a WhatsApp</h3>
+      <p id="s2-p">Automatically. "We received your order. Track it here." Customer relaxes and stops calling.</p>
     </div>
     <div class="how-step">
       <div class="step-num">3</div>
-      <h3>Order is ready</h3>
-      <p>Staff taps "Ready" in Washly. Customer gets another WhatsApp. They come pick up. Done.</p>
+      <h3 id="s3-h">Order is ready</h3>
+      <p id="s3-p">Staff taps "Ready" in Washly. Customer gets another WhatsApp. They come pick up. Done.</p>
     </div>
   </div>
 </section>
@@ -249,9 +255,9 @@ footer a { color: #4A9FD4; text-decoration: none; }
  
 <!-- CTA -->
 <section class="cta">
-  <h2>Ready to stop the calls?</h2>
-  <p>Join laundries across Qatar already using Washly. Setup takes less than 30 minutes.</p>
-  <p class="cta-ar">انضم إلى المغاسل في قطر التي تستخدم Washly. الإعداد يستغرق أقل من 30 دقيقة.</p>
+  <h2 id="cta-h2">Ready to stop the calls?</h2>
+  <p id="cta-p">Join laundries across Qatar already using Washly. Setup takes less than 30 minutes.</p>
+  <p class="cta-ar" id="cta-ar">انضم إلى المغاسل في قطر التي تستخدم Washly. الإعداد يستغرق أقل من 30 دقيقة.</p>
   <a href="https://wa.me/97466337779?text=Hi%20Washly!%20I'm%20interested%20in%20your%20system." class="btn-wa" target="_blank">
     <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
     WhatsApp Us Now
@@ -260,9 +266,121 @@ footer a { color: #4A9FD4; text-decoration: none; }
  
 <!-- FOOTER -->
 <footer>
-  <p>© 2026 Washly · Smart Laundry Management · Qatar 🇶🇦</p>
-  <p style="margin-top:8px;"><a href="/index.html">Staff Login</a> · <a href="/admin.html">Admin</a></p>
+  <p id="footer-text">© 2026 Washly · Smart Laundry Management · Qatar 🇶🇦</p>
+  <p style="margin-top:8px;"><a href="/index.html" id="footer-staff">Staff Login</a> · <a href="/admin.html" id="footer-admin">Admin</a></p>
 </footer>
  
+ 
+<script>
+const TRANSLATIONS = {
+  en: {
+    navFeatures: 'Features', navHow: 'How it works', navCta: 'Get Started',
+    heroBadge: '🇶🇦 Made for Qatar Laundries',
+    heroH1: 'Stop customers calling.<br><span>Start sending updates.</span>',
+    heroSub: 'Washly automatically notifies your customers on WhatsApp when their clothes are ready — so your staff can focus on work, not phone calls.',
+    heroAr: 'وقّف مكالمات العملاء. ابدأ بإرسال تحديثات واتساب تلقائية.',
+    heroBtn1: '📱 WhatsApp Us', heroBtn2: 'See How It Works',
+    painH2: 'Sound familiar? 😅',
+    painSub: 'Every laundry in Qatar faces these problems every single day.',
+    pain1H: '"Is my thoob ready?"', pain1P: 'Customers call every hour asking about their order. Staff waste time answering the same question.',
+    pain2H: 'Frustrated customers', pain2P: 'Customers come to collect and their clothes aren't ready yet — because nobody told them it was delayed.',
+    pain3H: 'No order tracking', pain3P: 'Staff don't know which orders are ready and which are still being processed without checking manually.',
+    solH2: 'Washly solves all of this', solSub: 'A simple system designed specifically for Qatar laundries.',
+    f1H: 'WhatsApp Notifications', f1P: 'Customers automatically receive a WhatsApp message when their order is received and when it's ready.',
+    f2H: 'Live Order Tracking', f2P: 'Customers get a link to track their order status live — no app download needed.',
+    f3H: 'Staff Dashboard', f3P: 'Simple tablet-friendly dashboard. Staff update order status with one tap. Works on any device.',
+    f4H: 'Arabic & English', f4P: 'Full Arabic and English support. Messages sent to customers in both languages.',
+    f5H: 'Works Like an App', f5P: 'Install on any phone or tablet with one tap. No app store needed.',
+    f6H: 'Ready in Minutes', f6P: 'We set everything up for you. Your staff will be trained and ready in under 30 minutes.',
+    howH2: 'How it works', howSub: 'Three simple steps. No technical knowledge needed.',
+    s1H: 'Customer drops clothes', s1P: 'Staff enters the order in Washly — takes 30 seconds. Customer's phone number is saved.',
+    s2H: 'Customer gets a WhatsApp', s2P: 'Automatically. "We received your order. Track it here." Customer relaxes and stops calling.',
+    s3H: 'Order is ready', s3P: 'Staff taps "Ready" in Washly. Customer gets another WhatsApp. They come pick up. Done.',
+    ctaH2: 'Ready to stop the calls?', ctaP: 'Join laundries across Qatar already using Washly. Setup takes less than 30 minutes.',
+    ctaAr: 'انضم إلى المغاسل في قطر التي تستخدم Washly. الإعداد يستغرق أقل من 30 دقيقة.',
+    ctaBtn: 'WhatsApp Us Now',
+    footerText: '© 2026 Washly · Smart Laundry Management · Qatar 🇶🇦',
+    staffLogin: 'Staff Login', admin: 'Admin',
+  },
+  ar: {
+    navFeatures: 'المميزات', navHow: 'كيف يعمل', navCta: 'ابدأ الآن',
+    heroBadge: '🇶🇦 مصمم لمغاسل قطر',
+    heroH1: 'أوقف مكالمات العملاء.<br><span>ابدأ بإرسال التحديثات.</span>',
+    heroSub: 'واشلي يُرسل تلقائياً رسائل واتساب لعملائك عندما تكون ملابسهم جاهزة — حتى يتمكن موظفوك من التركيز على العمل بدلاً من الرد على المكالمات.',
+    heroAr: 'Washly automatically sends WhatsApp updates to your customers.',
+    heroBtn1: '📱 تواصل معنا على واتساب', heroBtn2: 'كيف يعمل؟',
+    painH2: 'هل هذا مألوف؟ 😅',
+    painSub: 'كل مغسلة في قطر تواجه هذه المشاكل كل يوم.',
+    pain1H: '"هل ثوبي جاهز؟"', pain1P: 'العملاء يتصلون كل ساعة يسألون عن طلبهم. الموظفون يضيعون وقتهم في الرد على نفس السؤال.',
+    pain2H: 'عملاء محبطون', pain2P: 'العميل يأتي للاستلام وملابسه لم تجهز بعد — لأن أحداً لم يخبره بالتأخير.',
+    pain3H: 'لا يوجد تتبع للطلبات', pain3P: 'الموظفون لا يعرفون أي الطلبات جاهزة وأيها لا تزال قيد المعالجة دون المراجعة يدوياً.',
+    solH2: 'واشلي يحل كل هذا', solSub: 'نظام بسيط مصمم خصيصاً لمغاسل قطر.',
+    f1H: 'إشعارات واتساب', f1P: 'يتلقى العملاء تلقائياً رسالة واتساب عند استلام طلبهم وعند جهوز ملابسهم.',
+    f2H: 'تتبع الطلب مباشرة', f2P: 'يحصل العملاء على رابط لتتبع حالة طلبهم مباشرة — دون الحاجة لتحميل أي تطبيق.',
+    f3H: 'لوحة تحكم للموظفين', f3P: 'لوحة تحكم بسيطة تناسب الأجهزة اللوحية. يحدّث الموظفون حالة الطلب بنقرة واحدة.',
+    f4H: 'عربي وإنجليزي', f4P: 'دعم كامل للغتين العربية والإنجليزية. الرسائل تُرسل للعملاء بكلتا اللغتين.',
+    f5H: 'يعمل كتطبيق', f5P: 'ثبّته على أي هاتف أو جهاز لوحي بنقرة واحدة. لا حاجة لمتجر التطبيقات.',
+    f6H: 'جاهز في دقائق', f6P: 'نحن نهتم بالإعداد الكامل. سيكون موظفوك مدربين وجاهزين في أقل من 30 دقيقة.',
+    howH2: 'كيف يعمل', howSub: 'ثلاث خطوات بسيطة. لا تحتاج لأي خبرة تقنية.',
+    s1H: 'العميل يسلّم الملابس', s1P: 'يدخل الموظف الطلب في واشلي — يستغرق 30 ثانية. يتم حفظ رقم هاتف العميل.',
+    s2H: 'العميل يتلقى واتساب', s2P: 'تلقائياً. "استلمنا طلبك. تابعه من هنا." العميل يرتاح ويتوقف عن الاتصال.',
+    s3H: 'الطلب جاهز', s3P: 'الموظف يضغط "جاهز" في واشلي. العميل يتلقى واتساب آخر. يأتي ويستلم. تم.',
+    ctaH2: 'مستعد لإيقاف المكالمات؟', ctaP: 'انضم إلى المغاسل في قطر التي تستخدم واشلي. الإعداد يستغرق أقل من 30 دقيقة.',
+    ctaAr: 'Join laundries across Qatar already using Washly.',
+    ctaBtn: 'تواصل معنا على واتساب',
+    footerText: '© 2026 واشلي · نظام إدارة المغاسل الذكي · قطر 🇶🇦',
+    staffLogin: 'دخول الموظفين', admin: 'الإدارة',
+  }
+};
+ 
+let lang = 'en';
+ 
+function setLang(l) {
+  lang = l;
+  const T = TRANSLATIONS[l];
+  document.body.dir = l === 'ar' ? 'rtl' : 'ltr';
+  document.getElementById('btn-en').style.background = l === 'en' ? '#f0f0ee' : 'transparent';
+  document.getElementById('btn-en').style.fontWeight = l === 'en' ? '500' : '400';
+  document.getElementById('btn-ar').style.background = l === 'ar' ? '#f0f0ee' : 'transparent';
+  document.getElementById('btn-ar').style.fontWeight = l === 'ar' ? '500' : '400';
+  document.getElementById('nav-features').textContent = T.navFeatures;
+  document.getElementById('nav-how').textContent = T.navHow;
+  document.getElementById('nav-cta-btn').textContent = T.navCta;
+  document.getElementById('hero-badge').textContent = T.heroBadge;
+  document.getElementById('hero-h1').innerHTML = T.heroH1;
+  document.getElementById('hero-sub').textContent = T.heroSub;
+  document.getElementById('hero-ar').textContent = T.heroAr;
+  document.getElementById('hero-btn1').textContent = T.heroBtn1;
+  document.getElementById('hero-btn2').textContent = T.heroBtn2;
+  document.getElementById('pain-h2').textContent = T.painH2;
+  document.getElementById('pain-sub').textContent = T.painSub;
+  document.getElementById('pain1-h').textContent = T.pain1H;
+  document.getElementById('pain1-p').textContent = T.pain1P;
+  document.getElementById('pain2-h').textContent = T.pain2H;
+  document.getElementById('pain2-p').textContent = T.pain2P;
+  document.getElementById('pain3-h').textContent = T.pain3H;
+  document.getElementById('pain3-p').textContent = T.pain3P;
+  document.getElementById('sol-h2').textContent = T.solH2;
+  document.getElementById('sol-sub').textContent = T.solSub;
+  document.getElementById('f1-h').textContent = T.f1H; document.getElementById('f1-p').textContent = T.f1P;
+  document.getElementById('f2-h').textContent = T.f2H; document.getElementById('f2-p').textContent = T.f2P;
+  document.getElementById('f3-h').textContent = T.f3H; document.getElementById('f3-p').textContent = T.f3P;
+  document.getElementById('f4-h').textContent = T.f4H; document.getElementById('f4-p').textContent = T.f4P;
+  document.getElementById('f5-h').textContent = T.f5H; document.getElementById('f5-p').textContent = T.f5P;
+  document.getElementById('f6-h').textContent = T.f6H; document.getElementById('f6-p').textContent = T.f6P;
+  document.getElementById('how-h2').textContent = T.howH2;
+  document.getElementById('how-sub').textContent = T.howSub;
+  document.getElementById('s1-h').textContent = T.s1H; document.getElementById('s1-p').textContent = T.s1P;
+  document.getElementById('s2-h').textContent = T.s2H; document.getElementById('s2-p').textContent = T.s2P;
+  document.getElementById('s3-h').textContent = T.s3H; document.getElementById('s3-p').textContent = T.s3P;
+  document.getElementById('cta-h2').textContent = T.ctaH2;
+  document.getElementById('cta-p').textContent = T.ctaP;
+  document.getElementById('cta-ar').textContent = T.ctaAr;
+  document.getElementById('cta-btn').textContent = T.ctaBtn;
+  document.getElementById('footer-text').textContent = T.footerText;
+  document.getElementById('footer-staff').textContent = T.staffLogin;
+  document.getElementById('footer-admin').textContent = T.admin;
+}
+</script>
 </body>
 </html>
