@@ -13,12 +13,9 @@
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
 body { background: #f5f5f4; color: #1c1c1a; }
- 
-/* ---- LOGIN ---- */
 .login-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; padding: 2rem; background: linear-gradient(160deg, #e8f3fb 0%, #f5f5f4 100%); }
 .login-box { background: #fff; border-radius: 16px; border: 0.5px solid #e0e0de; padding: 2rem; width: 100%; max-width: 360px; box-shadow: 0 4px 24px rgba(0,0,0,0.07); }
 .login-logo { display: flex; align-items: center; gap: 12px; margin-bottom: 1.75rem; justify-content: center; }
-.login-logo-icon { width: 48px; height: 48px; background: #4A9FD4; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 26px; font-weight: 700; }
 .login-logo-text { font-size: 24px; font-weight: 600; color: #4A9FD4; }
 .login-label { font-size: 12px; color: #888; margin-bottom: 4px; display: block; }
 .login-input { width: 100%; padding: 10px 12px; font-size: 14px; border: 0.5px solid #ccc; border-radius: 8px; margin-bottom: 0.75rem; background: #fafafa; }
@@ -28,13 +25,10 @@ body { background: #f5f5f4; color: #1c1c1a; }
 .login-error { font-size: 13px; color: #A32D2D; background: #FCEBEB; padding: 8px 12px; border-radius: 8px; margin-top: 0.75rem; display: none; }
 .login-error.show { display: block; }
 .login-footer { font-size: 12px; color: #aaa; text-align: center; margin-top: 1.5rem; }
- 
-/* ---- APP ---- */
 .app-screen { display: none; }
 .app-screen.show { display: block; }
 .header { display: flex; justify-content: space-between; align-items: center; padding: 1rem 1.25rem; background: #fff; border-bottom: 0.5px solid #e0e0de; }
 .header-left { display: flex; align-items: center; gap: 10px; }
-.logo { width: 36px; height: 36px; background: #4A9FD4; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 20px; font-weight: 700; }
 .brand { font-size: 18px; font-weight: 600; color: #4A9FD4; }
 .brand-sub { font-size: 11px; color: #aaa; }
 .header-right { display: flex; align-items: center; gap: 8px; }
@@ -93,14 +87,15 @@ body { background: #f5f5f4; color: #1c1c1a; }
 .btn-cancel { padding: 7px 14px; font-size: 13px; border: 0.5px solid #ccc; border-radius: 8px; background: transparent; color: #666; cursor: pointer; }
 .btn-submit { padding: 7px 14px; font-size: 13px; font-weight: 500; background: #4A9FD4; color: #fff; border: none; border-radius: 8px; cursor: pointer; }
 .btn-submit:disabled { background: #eee; color: #aaa; cursor: default; }
-.item-row { display: flex; gap: 6px; align-items: center; }
+.item-row { display: flex; gap: 6px; align-items: center; margin-bottom: 4px; }
 .item-row select { flex: 1; padding: 7px 8px; font-size: 13px; border: 0.5px solid #ccc; border-radius: 8px; background: #fff; }
 .item-qty { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
-.qty-btn { width: 26px; height: 26px; border: 0.5px solid #ccc; border-radius: 6px; background: #f5f5f4; cursor: pointer; font-size: 14px; display: flex; align-items: center; justify-content: center; font-weight: 500; }
+.qty-btn { width: 28px; height: 28px; border: 0.5px solid #ccc; border-radius: 6px; background: #f5f5f4; cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center; font-weight: 500; line-height: 1; }
 .qty-btn:hover { background: #e8f3fb; border-color: #4A9FD4; }
-.qty-num { font-size: 14px; font-weight: 500; min-width: 20px; text-align: center; }
-.item-remove { width: 24px; height: 24px; border: none; background: transparent; color: #aaa; cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.qty-num { font-size: 14px; font-weight: 500; min-width: 24px; text-align: center; }
+.item-remove { width: 26px; height: 26px; border: none; background: transparent; color: #ccc; cursor: pointer; font-size: 18px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
 .item-remove:hover { color: #A32D2D; }
+.add-item-btn { width: 100%; padding: 7px; font-size: 12px; border: 0.5px dashed #4A9FD4; border-radius: 8px; background: transparent; color: #4A9FD4; cursor: pointer; margin-top: 4px; }
 .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #1A5F8A; color: #B8DDF5; font-size: 13px; padding: 10px 18px; border-radius: 8px; display: none; align-items: center; gap: 8px; z-index: 200; white-space: nowrap; }
 .toast.show { display: flex; }
 .toast.error { background: #791F1F; color: #F7C1C1; }
@@ -111,7 +106,6 @@ body { background: #f5f5f4; color: #1c1c1a; }
 </head>
 <body>
  
-<!-- LOGIN SCREEN -->
 <div class="login-screen" id="login-screen">
   <div class="login-box">
     <div class="login-logo">
@@ -128,7 +122,6 @@ body { background: #f5f5f4; color: #1c1c1a; }
   </div>
 </div>
  
-<!-- APP SCREEN -->
 <div class="app-screen" id="app-screen">
   <div class="header">
     <div class="header-left">
@@ -168,13 +161,16 @@ body { background: #f5f5f4; color: #1c1c1a; }
   </div>
 </div>
  
-<!-- NEW ORDER MODAL -->
 <div class="modal-backdrop" id="modal" onclick="handleBackdropClick(event)">
   <div class="modal">
     <h3 id="modal-title">New Order</h3>
-    <div class="form-row"><label id="lbl-name">Customer Name</label><input type="text" id="f-name" placeholder="Ahmed Al-Mannai"></div>
+    <div class="form-row"><label id="lbl-name">Customer Name</label><input type="text" id="f-name" placeholder="Ahmed"></div>
     <div class="form-row"><label id="lbl-phone">WhatsApp Number</label><input type="text" id="f-phone" placeholder="5xxx xxxx"></div>
-    <div class="form-row"><label id="lbl-items">Items</label><input type="text" id="f-items" placeholder="2x Thoob, 1x Qotraa"></div>
+    <div class="form-row">
+      <label id="lbl-items">Items</label>
+      <div id="items-list"></div>
+      <button type="button" class="add-item-btn" onclick="addItemRow()" id="btn-add-item">+ Add Item</button>
+    </div>
     <div class="form-row">
       <label id="lbl-type">Service Type</label>
       <select id="f-type" onchange="updatePipelinePreview()">
@@ -214,7 +210,6 @@ body { background: #f5f5f4; color: #1c1c1a; }
 <script>
 const SUPABASE_URL = 'https://ejmgiybyqqzbtylhgviq.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_iTZMaKFvYbZZX9kzOwB7gQ_KS9AlTBy';
-const HEADERS = { 'Content-Type': 'application/json', 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY };
  
 const SERVICE_PIPELINES = { wash_iron:['Received','Washing','Ironing','Ready'], wash_only:['Received','Washing','Ready'], iron_only:['Received','Ironing','Ready'], dry_clean:['Received','Dry Cleaning','Ready'] };
 const COLLECTION_STEP = { collect:'Collected', delivery:'Delivered' };
@@ -224,12 +219,26 @@ const AR_SERVICE = { wash_iron:'غسيل وكوي', wash_only:'غسيل فقط',
 const AR_COLLECTION = { collect:'استلام من المحل', delivery:'توصيل للعميل' };
 const ALL_STATUSES_EN = ['Received','Washing','Ironing','Dry Cleaning','Ready','Collected','Delivered'];
  
+const LAUNDRY_ITEMS = [
+  {en:'Thoob',ar:'ثوب'},{en:'Qotraa',ar:'قطرة'},{en:'Abaya',ar:'عباءة'},
+  {en:'Shirt',ar:'قميص'},{en:'Pants',ar:'بنطلون'},{en:'Jacket',ar:'جاكيت'},
+  {en:'Suit',ar:'بدلة'},{en:'T-Shirt',ar:'تيشيرت'},{en:'Dress',ar:'فستان'},
+  {en:'Skirt',ar:'تنورة'},{en:'Shorts',ar:'شورت'},{en:'Socks',ar:'جوارب'},
+  {en:'Hat',ar:'قبعة'},{en:'Cap',ar:'كاب'},{en:'Tie',ar:'ربطة عنق'},
+  {en:'Scarf',ar:'وشاح'},{en:'Belt',ar:'حزام'},{en:'Bedsheet',ar:'ملاءة'},
+  {en:'Blanket',ar:'بطانية'},{en:'Curtain',ar:'ستارة'},
+  {en:'Pillow Cover',ar:'كيس وسادة'},{en:'Carpet',ar:'سجادة'},
+];
+ 
 function getPipeline(s,c){ return [...SERVICE_PIPELINES[s], COLLECTION_STEP[c]]; }
 function statusLabel(s){ return lang==='ar'?(AR_STATUS[s]||s):s; }
  
 let lang='en', activeFilter='all', orders=[], currentUser=null, authToken=null;
  
-// ---- AUTH ----
+function getAuthHeaders() {
+  return { 'Content-Type': 'application/json', 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + authToken };
+}
+ 
 async function doLogin() {
   const email = document.getElementById('login-email').value.trim();
   const password = document.getElementById('login-password').value.trim();
@@ -247,7 +256,6 @@ async function doLogin() {
     if (!res.ok || !data.access_token) throw new Error();
     authToken = data.access_token;
     currentUser = data.user;
-    // Check if laundry is active
     const activeRes = await fetch(`${SUPABASE_URL}/rest/v1/laundries?email=eq.${encodeURIComponent(email)}&active=eq.true`, {
       headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + data.access_token }
     });
@@ -255,8 +263,7 @@ async function doLogin() {
     if (!activeData.length) {
       document.getElementById('login-error').textContent = 'Your account has been disabled. Please contact Washly support.';
       document.getElementById('login-error').classList.add('show');
-      authToken = null; currentUser = null;
-      return;
+      authToken = null; currentUser = null; return;
     }
     localStorage.setItem('washly_token', authToken);
     localStorage.setItem('washly_user', JSON.stringify(currentUser));
@@ -269,8 +276,7 @@ async function doLogin() {
 }
  
 function doLogout() {
-  localStorage.removeItem('washly_token');
-  localStorage.removeItem('washly_user');
+  localStorage.removeItem('washly_token'); localStorage.removeItem('washly_user');
   authToken = null; currentUser = null; orders = [];
   document.getElementById('app-screen').classList.remove('show');
   document.getElementById('login-screen').style.display = 'flex';
@@ -288,12 +294,9 @@ async function checkSession() {
   const token = localStorage.getItem('washly_token');
   const user = localStorage.getItem('washly_user');
   if (token && user) {
-    authToken = token;
-    currentUser = JSON.parse(user);
-    const parsedUser = JSON.parse(user);
-    // Verify account is still active
+    authToken = token; currentUser = JSON.parse(user);
     try {
-      const activeRes = await fetch(`${SUPABASE_URL}/rest/v1/laundries?email=eq.${encodeURIComponent(parsedUser.email)}&active=eq.true`, {
+      const activeRes = await fetch(`${SUPABASE_URL}/rest/v1/laundries?email=eq.${encodeURIComponent(currentUser.email)}&active=eq.true`, {
         headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + token }
       });
       const activeData = await activeRes.json();
@@ -303,22 +306,15 @@ async function checkSession() {
   }
 }
  
-// Allow Enter key on login
 document.getElementById('login-password').addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
 document.getElementById('login-email').addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
- 
-// ---- DATA ----
-function getAuthHeaders() {
-  return { 'Content-Type': 'application/json', 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + authToken };
-}
  
 async function fetchOrders() {
   try {
     const today = new Date().toISOString().split('T')[0];
     const res = await fetch(`${SUPABASE_URL}/rest/v1/orders?created_at=gte.${today}T00:00:00&laundry_id=eq.${currentUser.id}&order=created_at.desc`, { headers: getAuthHeaders() });
     if (!res.ok) throw new Error();
-    orders = await res.json();
-    updateMetrics(); renderOrders();
+    orders = await res.json(); updateMetrics(); renderOrders();
   } catch {
     document.getElementById('orders-list').innerHTML = '<div class="loading-state" style="color:#A32D2D">Could not load orders.</div>';
   }
@@ -326,8 +322,7 @@ async function fetchOrders() {
  
 async function saveOrder(o) {
   const res = await fetch(`${SUPABASE_URL}/rest/v1/orders`, {
-    method: 'POST',
-    headers: { ...getAuthHeaders(), 'Prefer': 'return=representation' },
+    method: 'POST', headers: { ...getAuthHeaders(), 'Prefer': 'return=representation' },
     body: JSON.stringify({ ...o, laundry_id: currentUser.id })
   });
   if (!res.ok) throw new Error(await res.text());
@@ -344,14 +339,12 @@ async function getLaundryName() {
  
 async function updateStatusIdx(id, idx) {
   const res = await fetch(`${SUPABASE_URL}/rest/v1/orders?id=eq.${id}`, {
-    method: 'PATCH',
-    headers: { ...getAuthHeaders(), 'Prefer': 'return=minimal' },
+    method: 'PATCH', headers: { ...getAuthHeaders(), 'Prefer': 'return=minimal' },
     body: JSON.stringify({ status_idx: idx })
   });
   if (!res.ok) throw new Error();
 }
  
-// ---- UI ----
 function buildFilterBtns() {
   const keys = ['all',...ALL_STATUSES_EN];
   const labels = lang==='ar' ? ['الكل','استُلم','غسيل','كوي','تنظيف جاف','جاهز','تم الاستلام','تم التوصيل'] : ['All','Received','Washing','Ironing','Dry Cleaning','Ready','Collected','Delivered'];
@@ -380,6 +373,7 @@ function setLang(l) {
   document.getElementById('btn-cancel').textContent=A?'إلغاء':'Cancel';
   document.getElementById('btn-submit').textContent=A?'إضافة الطلب':'Add Order';
   document.getElementById('btn-logout').textContent=A?'خروج':'Logout';
+  document.getElementById('btn-add-item').textContent=A?'+ إضافة قطعة':'+ Add Item';
   document.getElementById('search-input').placeholder=A?'ابحث بالاسم أو رقم الطلب...':'Search by name or order #...';
   const t=document.getElementById('f-type'),c=document.getElementById('f-collection');
   if(A){t.options[0].text='غسيل وكوي';t.options[1].text='غسيل فقط';t.options[2].text='كوي فقط';t.options[3].text='تنظيف جاف';c.options[0].text='استلام من المحل';c.options[1].text='توصيل للعميل';}
@@ -399,6 +393,48 @@ function updateMetrics(){
 function updatePipelinePreview(){
   const pipe=getPipeline(document.getElementById('f-type').value,document.getElementById('f-collection').value);
   document.getElementById('pipeline-preview').innerHTML=pipe.map((s,i)=>`<span class="pipe-step">${statusLabel(s)}</span>${i<pipe.length-1?'<span class="pipe-arrow"> → </span>':''}`).join('');
+}
+ 
+function addItemRow(selectedItem='Thoob', qty=1) {
+  const list = document.getElementById('items-list');
+  const id = 'item-' + Date.now() + Math.random().toString(36).slice(2);
+  const options = LAUNDRY_ITEMS.map(i =>
+    `<option value="${i.en}" ${i.en===selectedItem?'selected':''}>${i.en} / ${i.ar}</option>`
+  ).join('');
+  const div = document.createElement('div');
+  div.className = 'item-row';
+  div.id = id;
+  div.innerHTML = `
+    <select>${options}</select>
+    <div class="item-qty">
+      <button type="button" class="qty-btn" onclick="changeQty('${id}',-1)">−</button>
+      <span class="qty-num">${qty}</span>
+      <button type="button" class="qty-btn" onclick="changeQty('${id}',1)">+</button>
+    </div>
+    <button type="button" class="item-remove" onclick="removeItemRow('${id}')">✕</button>
+  `;
+  list.appendChild(div);
+}
+ 
+function changeQty(id, delta) {
+  const row = document.getElementById(id);
+  const span = row.querySelector('.qty-num');
+  span.textContent = Math.max(1, parseInt(span.textContent) + delta);
+}
+ 
+function removeItemRow(id) {
+  const row = document.getElementById(id);
+  if (row) row.remove();
+}
+ 
+function getItemsString() {
+  const rows = document.querySelectorAll('#items-list .item-row');
+  if (!rows.length) return '';
+  return Array.from(rows).map(row => {
+    const item = row.querySelector('select').value;
+    const qty = row.querySelector('.qty-num').textContent;
+    return `${qty}x ${item}`;
+  }).join(', ');
 }
  
 function renderOrders(){
@@ -432,21 +468,22 @@ function renderOrders(){
 async function advanceOrder(id){
   const o=orders.find(x=>x.id===id); if(!o) return;
   const pipe=getPipeline(o.service,o.collection); if(o.status_idx>=pipe.length-1) return;
-  const newIdx=o.status_idx+1;
-  const newStatus=pipe[newIdx];
+  const newIdx=o.status_idx+1; const newStatus=pipe[newIdx];
   try{
-    await updateStatusIdx(id,newIdx);
-    o.status_idx=newIdx;
-    showToast('Status updated!',false);
-    updateMetrics();renderOrders();
-    // Only send WhatsApp when order is Ready
-    if(newStatus === 'Ready'){
-      const laundryName = await getLaundryName();
-      const readyMsg = `*${laundryName}* 🧺\n\n✅ Hi ${o.customer_name}! Your clothes are ready for collection. Please come pick them up.\nOrder: #${String(o.id).padStart(3,'0')} | ${o.items}\n\n✅ ملابسك جاهزة للاستلام، تفضل باستلامها.`;
-      await sendWhatsAppMsg(o.phone, readyMsg);
+    await updateStatusIdx(id,newIdx); o.status_idx=newIdx;
+    showToast('Status updated!',false); updateMetrics(); renderOrders();
+    if(newStatus==='Ready'){
+      const laundryName=await getLaundryName();
+      const readyMsg=`*${laundryName}* 🧺\n\n✅ Hi ${o.customer_name}! Your clothes are ready for collection. Please come pick them up.\nOrder: #${String(o.id).padStart(3,'0')} | ${o.items}\n\n✅ ملابسك جاهزة للاستلام، تفضل باستلامها.`;
+      await sendWhatsAppMsg(o.phone,readyMsg);
     }
-  }
-  catch{showToast('Failed to update.',true);}
+  } catch{showToast('Failed to update.',true);}
+}
+ 
+async function sendWhatsAppMsg(phone,message){
+  try {
+    await fetch('/api/send-whatsapp',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({to:phone,message})});
+  } catch(e){console.log('WhatsApp failed:',e);}
 }
  
 function showToast(msg,isError){
@@ -457,127 +494,55 @@ function showToast(msg,isError){
 }
  
 function handleBackdropClick(e){ if(e.target===document.getElementById('modal')) closeModal(); }
-function openModal(){ document.getElementById('modal').classList.add('open'); document.getElementById('items-list').innerHTML=''; addItemRow('Thoob',1); updatePipelinePreview(); }
-function closeModal(){ document.getElementById('modal').classList.remove('open'); ['f-name','f-phone'].forEach(id=>document.getElementById(id).value=''); document.getElementById('items-list').innerHTML=''; }
+ 
+function openModal(){
+  document.getElementById('modal').classList.add('open');
+  document.getElementById('items-list').innerHTML='';
+  addItemRow('Thoob',1);
+  updatePipelinePreview();
+}
+ 
+function closeModal(){
+  document.getElementById('modal').classList.remove('open');
+  ['f-name','f-phone'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('items-list').innerHTML='';
+}
  
 function formatPhone(p){
-  p = p.replace(/\s/g,'');
+  p=p.replace(/\s/g,'');
   if(p.startsWith('+')) return p;
   if(p.startsWith('00')) return '+'+p.slice(2);
   if(p.startsWith('974')) return '+'+p;
   return '+974'+p;
 }
  
- 
-const LAUNDRY_ITEMS = [
-  { en: 'Thoob', ar: 'ثوب' },
-  { en: 'Qotraa', ar: 'قطرة' },
-  { en: 'Abaya', ar: 'عباءة' },
-  { en: 'Shirt', ar: 'قميص' },
-  { en: 'Pants', ar: 'بنطلون' },
-  { en: 'Jacket', ar: 'جاكيت' },
-  { en: 'Suit', ar: 'بدلة' },
-  { en: 'T-Shirt', ar: 'تيشيرت' },
-  { en: 'Dress', ar: 'فستان' },
-  { en: 'Skirt', ar: 'تنورة' },
-  { en: 'Shorts', ar: 'شورت' },
-  { en: 'Socks', ar: 'جوارب' },
-  { en: 'Hat', ar: 'قبعة' },
-  { en: 'Cap', ar: 'كاب' },
-  { en: 'Tie', ar: 'ربطة عنق' },
-  { en: 'Scarf', ar: 'وشاح' },
-  { en: 'Belt', ar: 'حزام' },
-  { en: 'Bedsheet', ar: 'ملاءة' },
-  { en: 'Blanket', ar: 'بطانية' },
-  { en: 'Curtain', ar: 'ستارة' },
-  { en: 'Pillow Cover', ar: 'كيس وسادة' },
-  { en: 'Carpet', ar: 'سجادة' },
-];
- 
-function addItemRow(selectedItem='', qty=1) {
-  const list = document.getElementById('items-list');
-  const id = 'item-' + Date.now();
-  const options = LAUNDRY_ITEMS.map(i => 
-    `<option value="${i.en}" ${i.en===selectedItem?'selected':''}>${i.en} / ${i.ar}</option>`
-  ).join('');
-  const div = document.createElement('div');
-  div.className = 'item-row';
-  div.id = id;
-  div.innerHTML = `
-    <select>${options}</select>
-    <div class="item-qty">
-      <button type="button" class="qty-btn" onclick="changeQty('${id}',-1)">−</button>
-      <span class="qty-num">${qty}</span>
-      <button type="button" class="qty-btn" onclick="changeQty('${id}',1)">+</button>
-    </div>
-    <button type="button" class="item-remove" onclick="removeItemRow('${id}')">✕</button>
-  `;
-  list.appendChild(div);
-}
- 
-function changeQty(id, delta) {
-  const row = document.getElementById(id);
-  const span = row.querySelector('.qty-num');
-  const current = parseInt(span.textContent);
-  const newVal = Math.max(1, current + delta);
-  span.textContent = newVal;
-}
- 
-function removeItemRow(id) {
-  const row = document.getElementById(id);
-  if (row) row.remove();
-}
- 
-function getItemsString() {
-  const rows = document.querySelectorAll('#items-list .item-row');
-  if (!rows.length) return '';
-  return Array.from(rows).map(row => {
-    const item = row.querySelector('select').value;
-    const qty = row.querySelector('.qty-num').textContent;
-    return `${qty}x ${item}`;
-  }).join(', ');
-}
- 
 async function addOrder(){
-  const name=document.getElementById('f-name').value.trim(),rawPhone=document.getElementById('f-phone').value.trim(),items=document.getElementById('f-items').value.trim();
+  const name=document.getElementById('f-name').value.trim();
+  const rawPhone=document.getElementById('f-phone').value.trim();
   const phone=formatPhone(rawPhone);
-  if(!name||!phone||!items){showToast('Please fill all fields',true);return;}
+  const items=getItemsString();
+  if(!name||!rawPhone){showToast('Please fill name and number',true);return;}
+  if(!items){showToast('Please add at least one item',true);return;}
   const btn=document.getElementById('btn-submit');btn.disabled=true;btn.textContent='...';
   const now=new Date(),time=now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0');
   try{
     const saved=await saveOrder({customer_name:name,phone,items,service:document.getElementById('f-type').value,collection:document.getElementById('f-collection').value,priority:document.getElementById('f-priority').value,status_idx:0,order_time:time});
     orders.unshift(saved);closeModal();showToast('Order saved!',false);updateMetrics();renderOrders();
-    // Send welcome WhatsApp with tracking link
-    const laundryName = await getLaundryName();
-    const trackUrl = `${window.location.origin}/track.html?token=${saved.tracking_token}`;
-    const welcomeMsg = `*${laundryName}* 🧺\n\nHello ${name}! We have received your order.\nItems: ${items}\n\nTrack your order live here:\n${trackUrl}\n\nمرحباً ${name}! استلمنا طلبك. تابع حالة طلبك من الرابط أعلاه.`;
-    await sendWhatsAppMsg(phone, welcomeMsg);
+    const laundryName=await getLaundryName();
+    const trackUrl=`${window.location.origin}/track.html?token=${saved.tracking_token}`;
+    const welcomeMsg=`*${laundryName}* 🧺\n\nHello ${name}! We have received your order.\nItems: ${items}\n\nTrack your order live here:\n${trackUrl}\n\nمرحباً ${name}! استلمنا طلبك. تابع حالة طلبك من الرابط أعلاه.`;
+    await sendWhatsAppMsg(phone,welcomeMsg);
   }catch(e){showToast('Failed to save: '+e.message,true);}
   finally{btn.disabled=false;btn.textContent=lang==='ar'?'إضافة الطلب':'Add Order';}
-}
- 
-async function sendWhatsAppMsg(phone, message){
-  try {
-    await fetch('/api/send-whatsapp', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ to: phone, message })
-    });
-  } catch(e) {
-    console.log('WhatsApp send failed:', e);
-  }
 }
  
 function updateTime(){ document.getElementById('lbl-time').textContent=new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}); }
 updateTime(); setInterval(updateTime,30000);
  
-if('serviceWorker' in navigator) {
-  navigator.serviceWorker.getRegistrations().then(regs => {
-    regs.forEach(r => r.unregister());
-  });
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.getRegistrations().then(regs=>{regs.forEach(r=>r.unregister());});
 }
  
-// Check if already logged in
 checkSession();
 </script>
 </body>
