@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Washly — Smart laundry management system for Qatar. Stop customers calling every hour. Send automatic WhatsApp updates.">
+<meta name="theme-color" content="#4A9FD4">
+<title>Washly — Smart Laundry Management</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
+html { scroll-behavior: smooth; }
+body { background: #fff; color: #1c1c1a; }
+ 
+/* NAV */
+nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; background: rgba(255,255,255,0.95); backdrop-filter: blur(10px); border-bottom: 0.5px solid #e0e0de; padding: 0.875rem 2rem; display: flex; justify-content: space-between; align-items: center; }
+.nav-logo { display: flex; align-items: center; gap: 10px; }
+.nav-logo img { width: 32px; height: 32px; border-radius: 8px; }
+.nav-logo-text { font-size: 18px; font-weight: 600; color: #4A9FD4; }
+.nav-cta { padding: 8px 20px; background: #4A9FD4; color: #fff; border: none; border-radius: 8px; font-size: 14px; font-weight: 500; cursor: pointer; text-decoration: none; }
+.nav-links { display: flex; gap: 24px; align-items: center; }
+.nav-links a { font-size: 14px; color: #555; text-decoration: none; }
+.nav-links a:hover { color: #4A9FD4; }
+ 
+/* HERO */
+.hero { padding: 8rem 2rem 5rem; text-align: center; background: linear-gradient(160deg, #e8f3fb 0%, #f5f5f4 60%, #fff 100%); }
+.hero-badge { display: inline-block; font-size: 12px; font-weight: 500; padding: 4px 14px; background: #E6F1FB; color: #1A5F8A; border-radius: 20px; margin-bottom: 1.5rem; }
+.hero h1 { font-size: clamp(2rem, 5vw, 3.5rem); font-weight: 700; color: #1c1c1a; line-height: 1.15; margin-bottom: 1.25rem; max-width: 700px; margin-left: auto; margin-right: auto; }
+.hero h1 span { color: #4A9FD4; }
+.hero-sub { font-size: clamp(1rem, 2vw, 1.2rem); color: #555; max-width: 540px; margin: 0 auto 2.5rem; line-height: 1.6; }
+.hero-ar { font-size: 1.1rem; color: #4A9FD4; direction: rtl; margin-bottom: 2.5rem; font-weight: 500; }
+.hero-btns { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+.btn-primary { padding: 14px 28px; background: #4A9FD4; color: #fff; border: none; border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; }
+.btn-secondary { padding: 14px 28px; background: #fff; color: #4A9FD4; border: 1.5px solid #4A9FD4; border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer; text-decoration: none; }
+.hero-img { margin-top: 4rem; max-width: 320px; margin-left: auto; margin-right: auto; }
+.phone-mockup { background: #1c1c1a; border-radius: 32px; padding: 12px; box-shadow: 0 24px 64px rgba(0,0,0,0.15); }
+.phone-screen { background: linear-gradient(160deg, #e8f3fb, #f5f5f4); border-radius: 22px; padding: 1.5rem 1rem; }
+.mock-order { background: #fff; border-radius: 12px; padding: 1rem; margin-bottom: 10px; border: 0.5px solid #e0e0de; }
+.mock-name { font-size: 13px; font-weight: 600; margin-bottom: 4px; }
+.mock-items { font-size: 11px; color: #888; margin-bottom: 8px; }
+.mock-steps { display: flex; gap: 4px; align-items: center; }
+.mock-dot { width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 9px; }
+.mock-dot.done { background: #4A9FD4; color: #fff; }
+.mock-dot.active { background: #E6F1FB; border: 1.5px solid #4A9FD4; color: #4A9FD4; }
+.mock-dot.wait { background: #f5f5f4; border: 1.5px solid #ddd; }
+.mock-line { flex: 1; height: 1.5px; background: #4A9FD4; }
+.mock-line-w { flex: 1; height: 1.5px; background: #ddd; }
+.mock-wa { background: #E1F5EE; border-radius: 10px; padding: 10px; font-size: 11px; color: #085041; display: flex; gap: 6px; align-items: flex-start; margin-top: 10px; }
+ 
+/* PAIN */
+.pain { padding: 5rem 2rem; background: #fff; text-align: center; }
+.pain h2 { font-size: clamp(1.5rem, 3vw, 2.2rem); font-weight: 700; margin-bottom: 1rem; }
+.pain-sub { font-size: 1rem; color: #666; max-width: 500px; margin: 0 auto 3rem; }
+.pain-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; max-width: 800px; margin: 0 auto; }
+.pain-card { background: #FCEBEB; border-radius: 12px; padding: 1.5rem; text-align: left; }
+.pain-card-icon { font-size: 28px; margin-bottom: 0.75rem; }
+.pain-card h3 { font-size: 15px; font-weight: 600; color: #A32D2D; margin-bottom: 6px; }
+.pain-card p { font-size: 13px; color: #7a3030; line-height: 1.5; }
+ 
+/* SOLUTION */
+.solution { padding: 5rem 2rem; background: #f5f5f4; text-align: center; }
+.solution h2 { font-size: clamp(1.5rem, 3vw, 2.2rem); font-weight: 700; margin-bottom: 1rem; }
+.solution-sub { font-size: 1rem; color: #666; max-width: 500px; margin: 0 auto 3rem; }
+.features { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; max-width: 900px; margin: 0 auto; }
+.feature { background: #fff; border-radius: 12px; padding: 1.5rem; text-align: left; border: 0.5px solid #e0e0de; }
+.feature-icon { font-size: 28px; margin-bottom: 0.75rem; }
+.feature h3 { font-size: 15px; font-weight: 600; margin-bottom: 6px; }
+.feature p { font-size: 13px; color: #666; line-height: 1.5; }
+ 
+/* HOW */
+.how { padding: 5rem 2rem; background: #fff; text-align: center; }
+.how h2 { font-size: clamp(1.5rem, 3vw, 2.2rem); font-weight: 700; margin-bottom: 1rem; }
+.how-sub { font-size: 1rem; color: #666; max-width: 500px; margin: 0 auto 3rem; }
+.steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 24px; max-width: 800px; margin: 0 auto; }
+.how-step { text-align: center; }
+.step-num { width: 48px; height: 48px; background: #4A9FD4; color: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: 700; margin: 0 auto 1rem; }
+.how-step h3 { font-size: 15px; font-weight: 600; margin-bottom: 6px; }
+.how-step p { font-size: 13px; color: #666; line-height: 1.5; }
+ 
+/* PRICING */
+.pricing { padding: 5rem 2rem; background: #f5f5f4; text-align: center; }
+.pricing h2 { font-size: clamp(1.5rem, 3vw, 2.2rem); font-weight: 700; margin-bottom: 1rem; }
+.pricing-sub { font-size: 1rem; color: #666; max-width: 500px; margin: 0 auto 3rem; }
+.price-card { background: #fff; border-radius: 16px; padding: 2.5rem 2rem; max-width: 380px; margin: 0 auto; border: 2px solid #4A9FD4; box-shadow: 0 8px 32px rgba(74,159,212,0.15); }
+.price-tag { font-size: 3rem; font-weight: 700; color: #4A9FD4; }
+.price-tag span { font-size: 1.2rem; color: #888; font-weight: 400; }
+.price-period { font-size: 14px; color: #888; margin-bottom: 1.5rem; }
+.price-features { text-align: left; margin-bottom: 2rem; }
+.price-feature { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 0.5px solid #f5f5f4; font-size: 14px; color: #444; }
+.price-feature-icon { color: #4A9FD4; font-size: 16px; flex-shrink: 0; }
+.price-note { font-size: 12px; color: #aaa; margin-top: 1rem; }
+.trial-badge { display: inline-block; background: #E1F5EE; color: #085041; font-size: 12px; padding: 4px 12px; border-radius: 20px; margin-bottom: 1rem; font-weight: 500; }
+ 
+/* CTA */
+.cta { padding: 5rem 2rem; background: linear-gradient(135deg, #4A9FD4, #1A5F8A); text-align: center; }
+.cta h2 { font-size: clamp(1.5rem, 3vw, 2.2rem); font-weight: 700; color: #fff; margin-bottom: 1rem; }
+.cta p { font-size: 1rem; color: rgba(255,255,255,0.85); max-width: 500px; margin: 0 auto 2rem; }
+.cta-ar { font-size: 1rem; color: rgba(255,255,255,0.75); direction: rtl; margin-bottom: 2rem; }
+.btn-wa { padding: 16px 32px; background: #25D366; color: #fff; border: none; border-radius: 10px; font-size: 16px; font-weight: 600; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 10px; }
+ 
+/* FOOTER */
+footer { padding: 2rem; text-align: center; background: #1c1c1a; color: #888; font-size: 13px; }
+footer a { color: #4A9FD4; text-decoration: none; }
+ 
+/* RESPONSIVE */
+@media (max-width: 600px) {
+  nav { padding: 0.875rem 1rem; }
+  .nav-links { display: none; }
+  .hero { padding: 6rem 1rem 3rem; }
+  .pain, .solution, .how, .pricing, .cta { padding: 3rem 1rem; }
+}
+</style>
+</head>
+<body>
+ 
+<!-- NAV -->
+<nav>
+  <div class="nav-logo">
+    <img src="/icon-192.png" alt="Washly">
+    <div class="nav-logo-text">Washly</div>
+  </div>
+  <div class="nav-links">
+    <a href="#features">Features</a>
+    <a href="#how">How it works</a>
+    
+  </div>
+  <a href="https://wa.me/97466337779?text=Hi%20Washly!%20I'm%20interested%20in%20your%20system." class="nav-cta" target="_blank">Get Started</a>
+</nav>
+ 
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-badge">🇶🇦 Made for Qatar Laundries</div>
+  <h1>Stop customers calling.<br><span>Start sending updates.</span></h1>
+  <p class="hero-sub">Washly automatically notifies your customers on WhatsApp when their clothes are ready — so your staff can focus on work, not phone calls.</p>
+  <p class="hero-ar">وقّف مكالمات العملاء. ابدأ بإرسال تحديثات واتساب تلقائية.</p>
+  <div class="hero-btns">
+    <a href="https://wa.me/97466337779?text=Hi%20Washly!%20I'm%20interested%20in%20your%20system." class="btn-primary" target="_blank">📱 WhatsApp Us</a>
+    <a href="#how" class="btn-secondary">See How It Works</a>
+  </div>
+  <div class="hero-img">
+    <div class="phone-mockup">
+      <div class="phone-screen">
+        <div class="mock-order">
+          <div class="mock-name">Ahmed Al-Mannai</div>
+          <div class="mock-items">2x Thoob · Wash & Iron</div>
+          <div class="mock-steps">
+            <div class="mock-dot done">✓</div>
+            <div class="mock-line"></div>
+            <div class="mock-dot done">✓</div>
+            <div class="mock-line"></div>
+            <div class="mock-dot active">♨</div>
+            <div class="mock-line-w"></div>
+            <div class="mock-dot wait"></div>
+          </div>
+        </div>
+        <div class="mock-wa">
+          <div>📱</div>
+          <div><strong>Washly</strong><br>Your clothes are ready! Come pick them up ✅<br>ملابسك جاهزة للاستلام</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+ 
+<!-- PAIN -->
+<section class="pain" id="pain">
+  <h2>Sound familiar? 😅</h2>
+  <p class="pain-sub">Every laundry in Qatar faces these problems every single day.</p>
+  <div class="pain-cards">
+    <div class="pain-card">
+      <div class="pain-card-icon">📞</div>
+      <h3>"Is my thoob ready?"</h3>
+      <p>Customers call every hour asking about their order. Staff waste time answering the same question.</p>
+    </div>
+    <div class="pain-card">
+      <div class="pain-card-icon">😤</div>
+      <h3>Frustrated customers</h3>
+      <p>Customers come to collect and their clothes aren't ready yet — because nobody told them it was delayed.</p>
+    </div>
+    <div class="pain-card">
+      <div class="pain-card-icon">📋</div>
+      <h3>No order tracking</h3>
+      <p>Staff don't know which orders are ready and which are still being processed without checking manually.</p>
+    </div>
+  </div>
+</section>
+ 
+<!-- SOLUTION -->
+<section class="solution" id="features">
+  <h2>Washly solves all of this</h2>
+  <p class="solution-sub">A simple system designed specifically for Qatar laundries.</p>
+  <div class="features">
+    <div class="feature">
+      <div class="feature-icon">💬</div>
+      <h3>WhatsApp Notifications</h3>
+      <p>Customers automatically receive a WhatsApp message when their order is received and when it's ready.</p>
+    </div>
+    <div class="feature">
+      <div class="feature-icon">📍</div>
+      <h3>Live Order Tracking</h3>
+      <p>Customers get a link to track their order status live — no app download needed.</p>
+    </div>
+    <div class="feature">
+      <div class="feature-icon">📊</div>
+      <h3>Staff Dashboard</h3>
+      <p>Simple tablet-friendly dashboard. Staff update order status with one tap. Works on any device.</p>
+    </div>
+    <div class="feature">
+      <div class="feature-icon">🇸🇦</div>
+      <h3>Arabic & English</h3>
+      <p>Full Arabic and English support. Messages sent to customers in both languages.</p>
+    </div>
+    <div class="feature">
+      <div class="feature-icon">📱</div>
+      <h3>Works Like an App</h3>
+      <p>Install on any phone or tablet with one tap. No app store needed. Works offline too.</p>
+    </div>
+    <div class="feature">
+      <div class="feature-icon">⚡</div>
+      <h3>Ready in Minutes</h3>
+      <p>We set everything up for you. Your staff will be trained and ready in under 30 minutes.</p>
+    </div>
+  </div>
+</section>
+ 
+<!-- HOW -->
+<section class="how" id="how">
+  <h2>How it works</h2>
+  <p class="how-sub">Three simple steps. No technical knowledge needed.</p>
+  <div class="steps">
+    <div class="how-step">
+      <div class="step-num">1</div>
+      <h3>Customer drops clothes</h3>
+      <p>Staff enters the order in Washly — takes 30 seconds. Customer's phone number is saved.</p>
+    </div>
+    <div class="how-step">
+      <div class="step-num">2</div>
+      <h3>Customer gets a WhatsApp</h3>
+      <p>Automatically. "We received your order. Track it here." Customer relaxes and stops calling.</p>
+    </div>
+    <div class="how-step">
+      <div class="step-num">3</div>
+      <h3>Order is ready</h3>
+      <p>Staff taps "Ready" in Washly. Customer gets another WhatsApp. They come pick up. Done.</p>
+    </div>
+  </div>
+</section>
+ 
+ 
+ 
+<!-- CTA -->
+<section class="cta">
+  <h2>Ready to stop the calls?</h2>
+  <p>Join laundries across Qatar already using Washly. Setup takes less than 30 minutes.</p>
+  <p class="cta-ar">انضم إلى المغاسل في قطر التي تستخدم Washly. الإعداد يستغرق أقل من 30 دقيقة.</p>
+  <a href="https://wa.me/97466337779?text=Hi%20Washly!%20I'm%20interested%20in%20your%20system." class="btn-wa" target="_blank">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+    WhatsApp Us Now
+  </a>
+</section>
+ 
+<!-- FOOTER -->
+<footer>
+  <p>© 2026 Washly · Smart Laundry Management · Qatar 🇶🇦</p>
+  <p style="margin-top:8px;"><a href="/index.html">Staff Login</a> · <a href="/admin.html">Admin</a></p>
+</footer>
+ 
+</body>
+</html>
