@@ -571,7 +571,11 @@ async function sendWhatsAppMsg(phone, message){
 function updateTime(){ document.getElementById('lbl-time').textContent=new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}); }
 updateTime(); setInterval(updateTime,30000);
  
-if('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js');
+if('serviceWorker' in navigator) {
+  navigator.serviceWorker.getRegistrations().then(regs => {
+    regs.forEach(r => r.unregister());
+  });
+}
  
 // Check if already logged in
 checkSession();
