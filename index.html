@@ -3,383 +3,272 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="description" content="Washly — Smart laundry management system for Qatar. Stop customers calling every hour. Send automatic WhatsApp updates.">
+<meta name="description" content="Washly — Smart laundry management system for Qatar.">
 <meta name="theme-color" content="#4A9FD4">
 <title>Washly — Smart Laundry Management</title>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
 html { scroll-behavior: smooth; }
 body { background: #fff; color: #1c1c1a; }
- 
-/* NAV */
 nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; background: rgba(255,255,255,0.95); backdrop-filter: blur(10px); border-bottom: 0.5px solid #e0e0de; padding: 0.875rem 2rem; display: flex; justify-content: space-between; align-items: center; }
 .nav-logo { display: flex; align-items: center; gap: 10px; }
 .nav-logo img { width: 32px; height: 32px; border-radius: 8px; }
 .nav-logo-text { font-size: 18px; font-weight: 600; color: #4A9FD4; }
-.nav-cta { padding: 8px 20px; background: #4A9FD4; color: #fff; border: none; border-radius: 8px; font-size: 14px; font-weight: 500; cursor: pointer; text-decoration: none; }
-.nav-links { display: flex; gap: 24px; align-items: center; }
+.nav-right { display: flex; align-items: center; gap: 12px; }
+.nav-links { display: flex; gap: 20px; }
 .nav-links a { font-size: 14px; color: #555; text-decoration: none; }
-.nav-links a:hover { color: #4A9FD4; }
- 
-/* HERO */
+.lang-toggle { display: flex; gap: 4px; }
+.lang-btn { padding: 4px 10px; font-size: 12px; border: 0.5px solid #ccc; border-radius: 6px; background: transparent; cursor: pointer; font-weight: 400; }
+.lang-btn.active { background: #f0f0ee; font-weight: 500; }
+.nav-cta { padding: 8px 20px; background: #4A9FD4; color: #fff; border: none; border-radius: 8px; font-size: 14px; font-weight: 500; cursor: pointer; text-decoration: none; white-space: nowrap; }
 .hero { padding: 8rem 2rem 5rem; text-align: center; background: linear-gradient(160deg, #e8f3fb 0%, #f5f5f4 60%, #fff 100%); }
 .hero-badge { display: inline-block; font-size: 12px; font-weight: 500; padding: 4px 14px; background: #E6F1FB; color: #1A5F8A; border-radius: 20px; margin-bottom: 1.5rem; }
 .hero h1 { font-size: clamp(2rem, 5vw, 3.5rem); font-weight: 700; color: #1c1c1a; line-height: 1.15; margin-bottom: 1.25rem; max-width: 700px; margin-left: auto; margin-right: auto; }
 .hero h1 span { color: #4A9FD4; }
-.hero-sub { font-size: clamp(1rem, 2vw, 1.2rem); color: #555; max-width: 540px; margin: 0 auto 2.5rem; line-height: 1.6; }
-.hero-ar { font-size: 1.1rem; color: #4A9FD4; direction: rtl; margin-bottom: 2.5rem; font-weight: 500; }
-.hero-btns { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+.hero-sub { font-size: clamp(1rem, 2vw, 1.2rem); color: #555; max-width: 540px; margin: 0 auto 1.5rem; line-height: 1.6; }
+.hero-btns { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-bottom: 4rem; }
 .btn-primary { padding: 14px 28px; background: #4A9FD4; color: #fff; border: none; border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; }
 .btn-secondary { padding: 14px 28px; background: #fff; color: #4A9FD4; border: 1.5px solid #4A9FD4; border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer; text-decoration: none; }
-.hero-img { margin-top: 4rem; max-width: 320px; margin-left: auto; margin-right: auto; }
-.phone-mockup { background: #1c1c1a; border-radius: 32px; padding: 12px; box-shadow: 0 24px 64px rgba(0,0,0,0.15); }
-.phone-screen { background: linear-gradient(160deg, #e8f3fb, #f5f5f4); border-radius: 22px; padding: 1.5rem 1rem; }
-.mock-order { background: #fff; border-radius: 12px; padding: 1rem; margin-bottom: 10px; border: 0.5px solid #e0e0de; }
+.phone-mockup { background: #1c1c1a; border-radius: 32px; padding: 12px; box-shadow: 0 24px 64px rgba(0,0,0,0.15); max-width: 280px; margin: 0 auto; }
+.phone-screen { background: linear-gradient(160deg, #e8f3fb, #f5f5f4); border-radius: 22px; padding: 1.25rem 1rem; }
+.mock-order { background: #fff; border-radius: 10px; padding: 0.875rem; margin-bottom: 8px; border: 0.5px solid #e0e0de; }
 .mock-name { font-size: 13px; font-weight: 600; margin-bottom: 4px; }
 .mock-items { font-size: 11px; color: #888; margin-bottom: 8px; }
 .mock-steps { display: flex; gap: 4px; align-items: center; }
-.mock-dot { width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 9px; }
+.mock-dot { width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 9px; flex-shrink: 0; }
 .mock-dot.done { background: #4A9FD4; color: #fff; }
 .mock-dot.active { background: #E6F1FB; border: 1.5px solid #4A9FD4; color: #4A9FD4; }
 .mock-dot.wait { background: #f5f5f4; border: 1.5px solid #ddd; }
 .mock-line { flex: 1; height: 1.5px; background: #4A9FD4; }
 .mock-line-w { flex: 1; height: 1.5px; background: #ddd; }
-.mock-wa { background: #E1F5EE; border-radius: 10px; padding: 10px; font-size: 11px; color: #085041; display: flex; gap: 6px; align-items: flex-start; margin-top: 10px; }
- 
-/* PAIN */
-.pain { padding: 5rem 2rem; background: #fff; text-align: center; }
-.pain h2 { font-size: clamp(1.5rem, 3vw, 2.2rem); font-weight: 700; margin-bottom: 1rem; }
-.pain-sub { font-size: 1rem; color: #666; max-width: 500px; margin: 0 auto 3rem; }
-.pain-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; max-width: 800px; margin: 0 auto; }
+.mock-wa { background: #E1F5EE; border-radius: 10px; padding: 10px; font-size: 11px; color: #085041; display: flex; gap: 6px; align-items: flex-start; }
+.section { padding: 5rem 2rem; text-align: center; }
+.section.gray { background: #f5f5f4; }
+.section h2 { font-size: clamp(1.5rem, 3vw, 2.2rem); font-weight: 700; margin-bottom: 1rem; }
+.section-sub { font-size: 1rem; color: #666; max-width: 500px; margin: 0 auto 3rem; }
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; max-width: 900px; margin: 0 auto; }
 .pain-card { background: #FCEBEB; border-radius: 12px; padding: 1.5rem; text-align: left; }
 .pain-card-icon { font-size: 28px; margin-bottom: 0.75rem; }
 .pain-card h3 { font-size: 15px; font-weight: 600; color: #A32D2D; margin-bottom: 6px; }
 .pain-card p { font-size: 13px; color: #7a3030; line-height: 1.5; }
- 
-/* SOLUTION */
-.solution { padding: 5rem 2rem; background: #f5f5f4; text-align: center; }
-.solution h2 { font-size: clamp(1.5rem, 3vw, 2.2rem); font-weight: 700; margin-bottom: 1rem; }
-.solution-sub { font-size: 1rem; color: #666; max-width: 500px; margin: 0 auto 3rem; }
-.features { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; max-width: 900px; margin: 0 auto; }
 .feature { background: #fff; border-radius: 12px; padding: 1.5rem; text-align: left; border: 0.5px solid #e0e0de; }
 .feature-icon { font-size: 28px; margin-bottom: 0.75rem; }
 .feature h3 { font-size: 15px; font-weight: 600; margin-bottom: 6px; }
 .feature p { font-size: 13px; color: #666; line-height: 1.5; }
- 
-/* HOW */
-.how { padding: 5rem 2rem; background: #fff; text-align: center; }
-.how h2 { font-size: clamp(1.5rem, 3vw, 2.2rem); font-weight: 700; margin-bottom: 1rem; }
-.how-sub { font-size: 1rem; color: #666; max-width: 500px; margin: 0 auto 3rem; }
-.steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 24px; max-width: 800px; margin: 0 auto; }
+.steps-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 24px; max-width: 800px; margin: 0 auto; }
 .how-step { text-align: center; }
 .step-num { width: 48px; height: 48px; background: #4A9FD4; color: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: 700; margin: 0 auto 1rem; }
 .how-step h3 { font-size: 15px; font-weight: 600; margin-bottom: 6px; }
 .how-step p { font-size: 13px; color: #666; line-height: 1.5; }
- 
-/* PRICING */
-.pricing { padding: 5rem 2rem; background: #f5f5f4; text-align: center; }
-.pricing h2 { font-size: clamp(1.5rem, 3vw, 2.2rem); font-weight: 700; margin-bottom: 1rem; }
-.pricing-sub { font-size: 1rem; color: #666; max-width: 500px; margin: 0 auto 3rem; }
-.price-card { background: #fff; border-radius: 16px; padding: 2.5rem 2rem; max-width: 380px; margin: 0 auto; border: 2px solid #4A9FD4; box-shadow: 0 8px 32px rgba(74,159,212,0.15); }
-.price-tag { font-size: 3rem; font-weight: 700; color: #4A9FD4; }
-.price-tag span { font-size: 1.2rem; color: #888; font-weight: 400; }
-.price-period { font-size: 14px; color: #888; margin-bottom: 1.5rem; }
-.price-features { text-align: left; margin-bottom: 2rem; }
-.price-feature { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 0.5px solid #f5f5f4; font-size: 14px; color: #444; }
-.price-feature-icon { color: #4A9FD4; font-size: 16px; flex-shrink: 0; }
-.price-note { font-size: 12px; color: #aaa; margin-top: 1rem; }
-.trial-badge { display: inline-block; background: #E1F5EE; color: #085041; font-size: 12px; padding: 4px 12px; border-radius: 20px; margin-bottom: 1rem; font-weight: 500; }
- 
-/* CTA */
-.cta { padding: 5rem 2rem; background: linear-gradient(135deg, #4A9FD4, #1A5F8A); text-align: center; }
-.cta h2 { font-size: clamp(1.5rem, 3vw, 2.2rem); font-weight: 700; color: #fff; margin-bottom: 1rem; }
-.cta p { font-size: 1rem; color: rgba(255,255,255,0.85); max-width: 500px; margin: 0 auto 2rem; }
-.cta-ar { font-size: 1rem; color: rgba(255,255,255,0.75); direction: rtl; margin-bottom: 2rem; }
-.btn-wa { padding: 16px 32px; background: #25D366; color: #fff; border: none; border-radius: 10px; font-size: 16px; font-weight: 600; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 10px; }
- 
-/* FOOTER */
+.cta-section { padding: 5rem 2rem; background: linear-gradient(135deg, #4A9FD4, #1A5F8A); text-align: center; }
+.cta-section h2 { font-size: clamp(1.5rem, 3vw, 2.2rem); font-weight: 700; color: #fff; margin-bottom: 1rem; }
+.cta-section p { font-size: 1rem; color: rgba(255,255,255,0.85); max-width: 500px; margin: 0 auto 1rem; }
+.btn-wa { padding: 16px 32px; background: #25D366; color: #fff; border: none; border-radius: 10px; font-size: 16px; font-weight: 600; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 10px; margin-top: 1rem; }
 footer { padding: 2rem; text-align: center; background: #1c1c1a; color: #888; font-size: 13px; }
 footer a { color: #4A9FD4; text-decoration: none; }
- 
-/* RESPONSIVE */
-@media (max-width: 600px) {
-  nav { padding: 0.875rem 1rem; }
-  .nav-links { display: none; }
-  .hero { padding: 6rem 1rem 3rem; }
-  .pain, .solution, .how, .pricing, .cta { padding: 3rem 1rem; }
-}
+@media (max-width: 600px) { nav { padding: 0.875rem 1rem; } .nav-links { display: none; } .hero { padding: 6rem 1rem 3rem; } .section { padding: 3rem 1rem; } .cta-section { padding: 3rem 1rem; } }
 </style>
 </head>
 <body>
  
-<!-- NAV -->
 <nav>
   <div class="nav-logo">
     <img src="/icon-192.png" alt="Washly">
     <div class="nav-logo-text">Washly</div>
   </div>
-  <div class="nav-links">
-    <a href="#features" id="nav-features">Features</a>
-    <a href="#how" id="nav-how">How it works</a>
-    
-  </div>
-  <div style="display:flex;align-items:center;gap:10px;">
-    <div style="display:flex;gap:4px;">
-      <button onclick="setLang('en')" id="btn-en" style="padding:4px 10px;font-size:12px;border:0.5px solid #ccc;border-radius:6px;background:#f0f0ee;font-weight:500;cursor:pointer;">EN</button>
-      <button onclick="setLang('ar')" id="btn-ar" style="padding:4px 10px;font-size:12px;border:0.5px solid #ccc;border-radius:6px;background:transparent;cursor:pointer;">AR</button>
+  <div class="nav-right">
+    <div class="nav-links">
+      <a href="#features" id="nav-features">Features</a>
+      <a href="#how" id="nav-how">How it works</a>
     </div>
-    <a href="https://wa.me/97466337779?text=Hi%20Washly!%20I'm%20interested%20in%20your%20system." class="nav-cta" target="_blank" id="nav-cta-btn">Get Started</a>
+    <div class="lang-toggle">
+      <button class="lang-btn active" onclick="setLang('en')">EN</button>
+      <button class="lang-btn" onclick="setLang('ar')">AR</button>
+    </div>
+    <a href="https://wa.me/97466337779?text=Hi%20Washly!%20I'm%20interested%20in%20your%20system." class="nav-cta" target="_blank" id="nav-cta">Get Started</a>
   </div>
 </nav>
  
-<!-- HERO -->
 <section class="hero">
   <div class="hero-badge" id="hero-badge">🇶🇦 Made for Qatar Laundries</div>
-  <h1>Stop customers calling.<br><span>Start sending updates.</span></h1>
+  <h1 id="hero-h1">Stop customers calling.<br><span>Start sending updates.</span></h1>
   <p class="hero-sub" id="hero-sub">Washly automatically notifies your customers on WhatsApp when their clothes are ready — so your staff can focus on work, not phone calls.</p>
-  <p class="hero-ar" id="hero-ar">وقّف مكالمات العملاء. ابدأ بإرسال تحديثات واتساب تلقائية.</p>
   <div class="hero-btns">
-    <a href="https://wa.me/97466337779?text=Hi%20Washly!%20I'm%20interested%20in%20your%20system." class="btn-primary" target="_blank">📱 WhatsApp Us</a>
+    <a href="https://wa.me/97466337779?text=Hi%20Washly!%20I'm%20interested%20in%20your%20system." class="btn-primary" target="_blank" id="hero-btn1">📱 WhatsApp Us</a>
     <a href="#how" class="btn-secondary" id="hero-btn2">See How It Works</a>
   </div>
-  <div class="hero-img">
-    <div class="phone-mockup">
-      <div class="phone-screen">
-        <div class="mock-order">
-          <div class="mock-name">Ahmed</div>
-          <div class="mock-items">2x Thoob · Wash & Iron</div>
-          <div class="mock-steps">
-            <div class="mock-dot done">✓</div>
-            <div class="mock-line"></div>
-            <div class="mock-dot done">✓</div>
-            <div class="mock-line"></div>
-            <div class="mock-dot active">♨</div>
-            <div class="mock-line-w"></div>
-            <div class="mock-dot wait"></div>
-          </div>
+  <div class="phone-mockup">
+    <div class="phone-screen">
+      <div class="mock-order">
+        <div class="mock-name">Ahmed</div>
+        <div class="mock-items">2x Thoob · Wash &amp; Iron</div>
+        <div class="mock-steps">
+          <div class="mock-dot done">✓</div><div class="mock-line"></div>
+          <div class="mock-dot done">✓</div><div class="mock-line"></div>
+          <div class="mock-dot active">♨</div><div class="mock-line-w"></div>
+          <div class="mock-dot wait"></div>
         </div>
-        <div class="mock-wa">
-          <div>📱</div>
-          <div><strong>Washly</strong><br>Your clothes are ready! Come pick them up ✅<br>ملابسك جاهزة للاستلام</div>
-        </div>
+      </div>
+      <div class="mock-wa">
+        <div>📱</div>
+        <div id="mock-wa-text"><strong>Washly</strong><br>Your clothes are ready! Come pick them up ✅<br>ملابسك جاهزة للاستلام</div>
       </div>
     </div>
   </div>
 </section>
  
-<!-- PAIN -->
-<section class="pain" id="pain">
+<section class="section" id="pain">
   <h2 id="pain-h2">Sound familiar? 😅</h2>
-  <p class="pain-sub" id="pain-sub">Every laundry in Qatar faces these problems every single day.</p>
-  <div class="pain-cards">
-    <div class="pain-card">
-      <div class="pain-card-icon">📞</div>
-      <h3 id="pain1-h">"Is my thoob ready?"</h3>
-      <p id="pain1-p">Customers call every hour asking about their order. Staff waste time answering the same question.</p>
-    </div>
-    <div class="pain-card">
-      <div class="pain-card-icon">😤</div>
-      <h3 id="pain2-h">Frustrated customers</h3>
-      <p id="pain2-p">Customers come to collect and their clothes aren't ready yet — because nobody told them it was delayed.</p>
-    </div>
-    <div class="pain-card">
-      <div class="pain-card-icon">📋</div>
-      <h3 id="pain3-h">No order tracking</h3>
-      <p id="pain3-p">Staff don't know which orders are ready and which are still being processed without checking manually.</p>
-    </div>
+  <p class="section-sub" id="pain-sub">Every laundry in Qatar faces these problems every single day.</p>
+  <div class="cards">
+    <div class="pain-card"><div class="pain-card-icon">📞</div><h3 id="pain1-h">"Is my thoob ready?"</h3><p id="pain1-p">Customers call every hour asking about their order. Staff waste time answering the same question.</p></div>
+    <div class="pain-card"><div class="pain-card-icon">😤</div><h3 id="pain2-h">Frustrated customers</h3><p id="pain2-p">Customers come to collect and their clothes aren't ready yet — because nobody told them it was delayed.</p></div>
+    <div class="pain-card"><div class="pain-card-icon">📋</div><h3 id="pain3-h">No order tracking</h3><p id="pain3-p">Staff don't know which orders are ready without checking manually.</p></div>
   </div>
 </section>
  
-<!-- SOLUTION -->
-<section class="solution" id="features">
+<section class="section gray" id="features">
   <h2 id="sol-h2">Washly solves all of this</h2>
-  <p class="solution-sub" id="sol-sub">A simple system designed specifically for Qatar laundries.</p>
-  <div class="features">
-    <div class="feature">
-      <div class="feature-icon">💬</div>
-      <h3 id="f1-h">WhatsApp Notifications</h3>
-      <p id="f1-p">Customers automatically receive a WhatsApp message when their order is received and when it's ready.</p>
-    </div>
-    <div class="feature">
-      <div class="feature-icon">📍</div>
-      <h3 id="f2-h">Live Order Tracking</h3>
-      <p id="f2-p">Customers get a link to track their order status live — no app download needed.</p>
-    </div>
-    <div class="feature">
-      <div class="feature-icon">📊</div>
-      <h3 id="f3-h">Staff Dashboard</h3>
-      <p id="f3-p">Simple tablet-friendly dashboard. Staff update order status with one tap. Works on any device.</p>
-    </div>
-    <div class="feature">
-      <div class="feature-icon">🇸🇦</div>
-      <h3>Arabic & English</h3>
-      <p id="f4-p">Full Arabic and English support. Messages sent to customers in both languages.</p>
-    </div>
-    <div class="feature">
-      <div class="feature-icon">📱</div>
-      <h3 id="f5-h">Works Like an App</h3>
-      <p id="f5-p">Install on any phone or tablet with one tap. No app store needed. Works offline too.</p>
-    </div>
-    <div class="feature">
-      <div class="feature-icon">⚡</div>
-      <h3 id="f6-h">Ready in Minutes</h3>
-      <p id="f6-p">We set everything up for you. Your staff will be trained and ready in under 30 minutes.</p>
-    </div>
+  <p class="section-sub" id="sol-sub">A simple system designed specifically for Qatar laundries.</p>
+  <div class="cards">
+    <div class="feature"><div class="feature-icon">💬</div><h3 id="f1-h">WhatsApp Notifications</h3><p id="f1-p">Customers automatically receive a WhatsApp message when their order is received and when it's ready.</p></div>
+    <div class="feature"><div class="feature-icon">📍</div><h3 id="f2-h">Live Order Tracking</h3><p id="f2-p">Customers get a link to track their order status live — no app download needed.</p></div>
+    <div class="feature"><div class="feature-icon">📊</div><h3 id="f3-h">Staff Dashboard</h3><p id="f3-p">Simple tablet-friendly dashboard. Staff update order status with one tap.</p></div>
+    <div class="feature"><div class="feature-icon">🇸🇦</div><h3 id="f4-h">Arabic &amp; English</h3><p id="f4-p">Full Arabic and English support. Messages sent in both languages.</p></div>
+    <div class="feature"><div class="feature-icon">📱</div><h3 id="f5-h">Works Like an App</h3><p id="f5-p">Install on any phone or tablet with one tap. No app store needed.</p></div>
+    <div class="feature"><div class="feature-icon">⚡</div><h3 id="f6-h">Ready in Minutes</h3><p id="f6-p">We set everything up for you. Your staff will be trained in under 30 minutes.</p></div>
   </div>
 </section>
  
-<!-- HOW -->
-<section class="how" id="how">
+<section class="section" id="how">
   <h2 id="how-h2">How it works</h2>
-  <p class="how-sub" id="how-sub">Three simple steps. No technical knowledge needed.</p>
-  <div class="steps">
-    <div class="how-step">
-      <div class="step-num">1</div>
-      <h3 id="s1-h">Customer drops clothes</h3>
-      <p id="s1-p">Staff enters the order in Washly — takes 30 seconds. Customer's phone number is saved.</p>
-    </div>
-    <div class="how-step">
-      <div class="step-num">2</div>
-      <h3 id="s2-h">Customer gets a WhatsApp</h3>
-      <p id="s2-p">Automatically. "We received your order. Track it here." Customer relaxes and stops calling.</p>
-    </div>
-    <div class="how-step">
-      <div class="step-num">3</div>
-      <h3 id="s3-h">Order is ready</h3>
-      <p id="s3-p">Staff taps "Ready" in Washly. Customer gets another WhatsApp. They come pick up. Done.</p>
-    </div>
+  <p class="section-sub" id="how-sub">Three simple steps. No technical knowledge needed.</p>
+  <div class="steps-grid">
+    <div class="how-step"><div class="step-num">1</div><h3 id="s1-h">Customer drops clothes</h3><p id="s1-p">Staff enters the order in Washly in 30 seconds. Customer's phone number is saved.</p></div>
+    <div class="how-step"><div class="step-num">2</div><h3 id="s2-h">Customer gets a WhatsApp</h3><p id="s2-p">Automatically. "We received your order. Track it here." Customer relaxes and stops calling.</p></div>
+    <div class="how-step"><div class="step-num">3</div><h3 id="s3-h">Order is ready</h3><p id="s3-p">Staff taps "Ready" in Washly. Customer gets a WhatsApp. They come pick up. Done.</p></div>
   </div>
 </section>
  
- 
- 
-<!-- CTA -->
-<section class="cta">
+<section class="cta-section">
   <h2 id="cta-h2">Ready to stop the calls?</h2>
   <p id="cta-p">Join laundries across Qatar already using Washly. Setup takes less than 30 minutes.</p>
-  <p class="cta-ar" id="cta-ar">انضم إلى المغاسل في قطر التي تستخدم Washly. الإعداد يستغرق أقل من 30 دقيقة.</p>
-  <a href="https://wa.me/97466337779?text=Hi%20Washly!%20I'm%20interested%20in%20your%20system." class="btn-wa" target="_blank">
+  <p id="cta-p2" style="color:rgba(255,255,255,0.75);font-size:0.95rem;direction:rtl;margin-top:0.5rem;">انضم إلى المغاسل في قطر التي تستخدم Washly. الإعداد يستغرق أقل من 30 دقيقة.</p>
+  <a href="https://wa.me/97466337779?text=Hi%20Washly!%20I'm%20interested%20in%20your%20system." class="btn-wa" target="_blank" id="cta-btn">
     <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
-    WhatsApp Us Now
+    <span id="cta-btn-text">WhatsApp Us Now</span>
   </a>
 </section>
  
-<!-- FOOTER -->
 <footer>
   <p id="footer-text">© 2026 Washly · Smart Laundry Management · Qatar 🇶🇦</p>
-  <p style="margin-top:8px;"><a href="/index.html" id="footer-staff">Staff Login</a> · <a href="/admin.html" id="footer-admin">Admin</a></p>
+  <p style="margin-top:8px;"><a href="/app.html" id="footer-staff">Staff Login</a> · <a href="/admin.html" id="footer-admin">Admin</a></p>
 </footer>
  
- 
 <script>
-const TRANSLATIONS = {
+const T = {
   en: {
-    navFeatures: 'Features', navHow: 'How it works', navCta: 'Get Started',
-    heroBadge: '🇶🇦 Made for Qatar Laundries',
-    heroH1: 'Stop customers calling.<br><span>Start sending updates.</span>',
-    heroSub: 'Washly automatically notifies your customers on WhatsApp when their clothes are ready — so your staff can focus on work, not phone calls.',
-    heroAr: 'وقّف مكالمات العملاء. ابدأ بإرسال تحديثات واتساب تلقائية.',
-    heroBtn1: '📱 WhatsApp Us', heroBtn2: 'See How It Works',
-    painH2: 'Sound familiar? 😅',
-    painSub: 'Every laundry in Qatar faces these problems every single day.',
-    pain1H: '"Is my thoob ready?"', pain1P: 'Customers call every hour asking about their order. Staff waste time answering the same question.',
-    pain2H: 'Frustrated customers', pain2P: 'Customers come to collect and their clothes aren't ready yet — because nobody told them it was delayed.',
-    pain3H: 'No order tracking', pain3P: 'Staff don't know which orders are ready and which are still being processed without checking manually.',
-    solH2: 'Washly solves all of this', solSub: 'A simple system designed specifically for Qatar laundries.',
-    f1H: 'WhatsApp Notifications', f1P: 'Customers automatically receive a WhatsApp message when their order is received and when it's ready.',
-    f2H: 'Live Order Tracking', f2P: 'Customers get a link to track their order status live — no app download needed.',
-    f3H: 'Staff Dashboard', f3P: 'Simple tablet-friendly dashboard. Staff update order status with one tap. Works on any device.',
-    f4H: 'Arabic & English', f4P: 'Full Arabic and English support. Messages sent to customers in both languages.',
-    f5H: 'Works Like an App', f5P: 'Install on any phone or tablet with one tap. No app store needed.',
-    f6H: 'Ready in Minutes', f6P: 'We set everything up for you. Your staff will be trained and ready in under 30 minutes.',
-    howH2: 'How it works', howSub: 'Three simple steps. No technical knowledge needed.',
-    s1H: 'Customer drops clothes', s1P: 'Staff enters the order in Washly — takes 30 seconds. Customer's phone number is saved.',
-    s2H: 'Customer gets a WhatsApp', s2P: 'Automatically. "We received your order. Track it here." Customer relaxes and stops calling.',
-    s3H: 'Order is ready', s3P: 'Staff taps "Ready" in Washly. Customer gets another WhatsApp. They come pick up. Done.',
-    ctaH2: 'Ready to stop the calls?', ctaP: 'Join laundries across Qatar already using Washly. Setup takes less than 30 minutes.',
-    ctaAr: 'انضم إلى المغاسل في قطر التي تستخدم Washly. الإعداد يستغرق أقل من 30 دقيقة.',
-    ctaBtn: 'WhatsApp Us Now',
-    footerText: '© 2026 Washly · Smart Laundry Management · Qatar 🇶🇦',
-    staffLogin: 'Staff Login', admin: 'Admin',
+    navFeatures:'Features', navHow:'How it works', navCta:'Get Started',
+    heroBadge:'🇶🇦 Made for Qatar Laundries',
+    heroH1:'Stop customers calling.<br><span>Start sending updates.</span>',
+    heroSub:"Washly automatically notifies your customers on WhatsApp when their clothes are ready — so your staff can focus on work, not phone calls.",
+    heroBtn1:'📱 WhatsApp Us', heroBtn2:'See How It Works',
+    mockWa:'<strong>Washly</strong><br>Your clothes are ready! Come pick them up ✅<br>ملابسك جاهزة للاستلام',
+    painH2:'Sound familiar? 😅', painSub:'Every laundry in Qatar faces these problems every single day.',
+    pain1H:'"Is my thoob ready?"', pain1P:"Customers call every hour asking about their order. Staff waste time answering the same question.",
+    pain2H:'Frustrated customers', pain2P:"Customers come to collect and their clothes aren't ready yet — because nobody told them it was delayed.",
+    pain3H:'No order tracking', pain3P:"Staff don't know which orders are ready without checking manually.",
+    solH2:'Washly solves all of this', solSub:'A simple system designed specifically for Qatar laundries.',
+    f1H:'WhatsApp Notifications', f1P:"Customers automatically receive a WhatsApp message when their order is received and when it's ready.",
+    f2H:'Live Order Tracking', f2P:'Customers get a link to track their order status live — no app download needed.',
+    f3H:'Staff Dashboard', f3P:'Simple tablet-friendly dashboard. Staff update order status with one tap.',
+    f4H:'Arabic & English', f4P:'Full Arabic and English support. Messages sent in both languages.',
+    f5H:'Works Like an App', f5P:'Install on any phone or tablet with one tap. No app store needed.',
+    f6H:'Ready in Minutes', f6P:'We set everything up for you. Your staff will be trained in under 30 minutes.',
+    howH2:'How it works', howSub:'Three simple steps. No technical knowledge needed.',
+    s1H:'Customer drops clothes', s1P:"Staff enters the order in Washly in 30 seconds. Customer's phone number is saved.",
+    s2H:'Customer gets a WhatsApp', s2P:'"We received your order. Track it here." Customer relaxes and stops calling.',
+    s3H:'Order is ready', s3P:'Staff taps "Ready" in Washly. Customer gets a WhatsApp. They come pick up. Done.',
+    ctaH2:'Ready to stop the calls?', ctaP:'Join laundries across Qatar already using Washly. Setup takes less than 30 minutes.',
+    ctaP2:'انضم إلى المغاسل في قطر التي تستخدم Washly. الإعداد يستغرق أقل من 30 دقيقة.',
+    ctaBtn:'WhatsApp Us Now',
+    footerText:'© 2026 Washly · Smart Laundry Management · Qatar 🇶🇦',
+    staffLogin:'Staff Login', admin:'Admin',
   },
   ar: {
-    navFeatures: 'المميزات', navHow: 'كيف يعمل', navCta: 'ابدأ الآن',
-    heroBadge: '🇶🇦 مصمم لمغاسل قطر',
-    heroH1: 'أوقف مكالمات العملاء.<br><span>ابدأ بإرسال التحديثات.</span>',
-    heroSub: 'واشلي يُرسل تلقائياً رسائل واتساب لعملائك عندما تكون ملابسهم جاهزة — حتى يتمكن موظفوك من التركيز على العمل بدلاً من الرد على المكالمات.',
-    heroAr: 'Washly automatically sends WhatsApp updates to your customers.',
-    heroBtn1: '📱 تواصل معنا على واتساب', heroBtn2: 'كيف يعمل؟',
-    painH2: 'هل هذا مألوف؟ 😅',
-    painSub: 'كل مغسلة في قطر تواجه هذه المشاكل كل يوم.',
-    pain1H: '"هل ثوبي جاهز؟"', pain1P: 'العملاء يتصلون كل ساعة يسألون عن طلبهم. الموظفون يضيعون وقتهم في الرد على نفس السؤال.',
-    pain2H: 'عملاء محبطون', pain2P: 'العميل يأتي للاستلام وملابسه لم تجهز بعد — لأن أحداً لم يخبره بالتأخير.',
-    pain3H: 'لا يوجد تتبع للطلبات', pain3P: 'الموظفون لا يعرفون أي الطلبات جاهزة وأيها لا تزال قيد المعالجة دون المراجعة يدوياً.',
-    solH2: 'واشلي يحل كل هذا', solSub: 'نظام بسيط مصمم خصيصاً لمغاسل قطر.',
-    f1H: 'إشعارات واتساب', f1P: 'يتلقى العملاء تلقائياً رسالة واتساب عند استلام طلبهم وعند جهوز ملابسهم.',
-    f2H: 'تتبع الطلب مباشرة', f2P: 'يحصل العملاء على رابط لتتبع حالة طلبهم مباشرة — دون الحاجة لتحميل أي تطبيق.',
-    f3H: 'لوحة تحكم للموظفين', f3P: 'لوحة تحكم بسيطة تناسب الأجهزة اللوحية. يحدّث الموظفون حالة الطلب بنقرة واحدة.',
-    f4H: 'عربي وإنجليزي', f4P: 'دعم كامل للغتين العربية والإنجليزية. الرسائل تُرسل للعملاء بكلتا اللغتين.',
-    f5H: 'يعمل كتطبيق', f5P: 'ثبّته على أي هاتف أو جهاز لوحي بنقرة واحدة. لا حاجة لمتجر التطبيقات.',
-    f6H: 'جاهز في دقائق', f6P: 'نحن نهتم بالإعداد الكامل. سيكون موظفوك مدربين وجاهزين في أقل من 30 دقيقة.',
-    howH2: 'كيف يعمل', howSub: 'ثلاث خطوات بسيطة. لا تحتاج لأي خبرة تقنية.',
-    s1H: 'العميل يسلّم الملابس', s1P: 'يدخل الموظف الطلب في واشلي — يستغرق 30 ثانية. يتم حفظ رقم هاتف العميل.',
-    s2H: 'العميل يتلقى واتساب', s2P: 'تلقائياً. "استلمنا طلبك. تابعه من هنا." العميل يرتاح ويتوقف عن الاتصال.',
-    s3H: 'الطلب جاهز', s3P: 'الموظف يضغط "جاهز" في واشلي. العميل يتلقى واتساب آخر. يأتي ويستلم. تم.',
-    ctaH2: 'مستعد لإيقاف المكالمات؟', ctaP: 'انضم إلى المغاسل في قطر التي تستخدم واشلي. الإعداد يستغرق أقل من 30 دقيقة.',
-    ctaAr: 'Join laundries across Qatar already using Washly.',
-    ctaBtn: 'تواصل معنا على واتساب',
-    footerText: '© 2026 واشلي · نظام إدارة المغاسل الذكي · قطر 🇶🇦',
-    staffLogin: 'دخول الموظفين', admin: 'الإدارة',
+    navFeatures:'المميزات', navHow:'كيف يعمل', navCta:'ابدأ الآن',
+    heroBadge:'🇶🇦 مصمم لمغاسل قطر',
+    heroH1:'أوقف مكالمات العملاء.<br><span>ابدأ بإرسال التحديثات.</span>',
+    heroSub:'واشلي يُرسل تلقائياً رسائل واتساب لعملائك عندما تكون ملابسهم جاهزة — حتى يتمكن موظفوك من التركيز على العمل.',
+    heroBtn1:'📱 تواصل معنا على واتساب', heroBtn2:'كيف يعمل؟',
+    mockWa:'<strong>واشلي</strong><br>ملابسك جاهزة للاستلام! تفضل ✅<br>Your clothes are ready!',
+    painH2:'هل هذا مألوف؟ 😅', painSub:'كل مغسلة في قطر تواجه هذه المشاكل كل يوم.',
+    pain1H:'"هل ثوبي جاهز؟"', pain1P:'العملاء يتصلون كل ساعة يسألون عن طلبهم. الموظفون يضيعون وقتهم في الرد.',
+    pain2H:'عملاء محبطون', pain2P:'العميل يأتي للاستلام وملابسه لم تجهز بعد — لأن أحداً لم يخبره.',
+    pain3H:'لا يوجد تتبع للطلبات', pain3P:'الموظفون لا يعرفون أي الطلبات جاهزة دون المراجعة يدوياً.',
+    solH2:'واشلي يحل كل هذا', solSub:'نظام بسيط مصمم خصيصاً لمغاسل قطر.',
+    f1H:'إشعارات واتساب', f1P:'يتلقى العملاء تلقائياً رسالة واتساب عند استلام طلبهم وعند جهوز ملابسهم.',
+    f2H:'تتبع الطلب مباشرة', f2P:'يحصل العملاء على رابط لتتبع حالة طلبهم مباشرة — دون تحميل أي تطبيق.',
+    f3H:'لوحة تحكم للموظفين', f3P:'لوحة تحكم بسيطة تناسب الأجهزة اللوحية. يحدّث الموظفون الحالة بنقرة واحدة.',
+    f4H:'عربي وإنجليزي', f4P:'دعم كامل للغتين العربية والإنجليزية. الرسائل تُرسل بكلتا اللغتين.',
+    f5H:'يعمل كتطبيق', f5P:'ثبّته على أي هاتف أو جهاز لوحي بنقرة واحدة. لا حاجة لمتجر التطبيقات.',
+    f6H:'جاهز في دقائق', f6P:'نحن نهتم بالإعداد الكامل. سيكون موظفوك مدربين وجاهزين في أقل من 30 دقيقة.',
+    howH2:'كيف يعمل', howSub:'ثلاث خطوات بسيطة. لا تحتاج لأي خبرة تقنية.',
+    s1H:'العميل يسلّم الملابس', s1P:'يدخل الموظف الطلب في واشلي في 30 ثانية. يتم حفظ رقم هاتف العميل.',
+    s2H:'العميل يتلقى واتساب', s2P:'"استلمنا طلبك. تابعه من هنا." العميل يرتاح ويتوقف عن الاتصال.',
+    s3H:'الطلب جاهز', s3P:'الموظف يضغط "جاهز" في واشلي. العميل يتلقى واتساب. يأتي ويستلم. تم.',
+    ctaH2:'مستعد لإيقاف المكالمات؟', ctaP:'انضم إلى المغاسل في قطر التي تستخدم واشلي. الإعداد يستغرق أقل من 30 دقيقة.',
+    ctaP2:'Join laundries across Qatar already using Washly.',
+    ctaBtn:'تواصل معنا على واتساب',
+    footerText:'© 2026 واشلي · نظام إدارة المغاسل الذكي · قطر 🇶🇦',
+    staffLogin:'دخول الموظفين', admin:'الإدارة',
   }
 };
  
-let lang = 'en';
- 
 function setLang(l) {
-  lang = l;
-  const T = TRANSLATIONS[l];
-  document.body.dir = l === 'ar' ? 'rtl' : 'ltr';
-  document.getElementById('btn-en').style.background = l === 'en' ? '#f0f0ee' : 'transparent';
-  document.getElementById('btn-en').style.fontWeight = l === 'en' ? '500' : '400';
-  document.getElementById('btn-ar').style.background = l === 'ar' ? '#f0f0ee' : 'transparent';
-  document.getElementById('btn-ar').style.fontWeight = l === 'ar' ? '500' : '400';
-  document.getElementById('nav-features').textContent = T.navFeatures;
-  document.getElementById('nav-how').textContent = T.navHow;
-  document.getElementById('nav-cta-btn').textContent = T.navCta;
-  document.getElementById('hero-badge').textContent = T.heroBadge;
-  document.getElementById('hero-h1').innerHTML = T.heroH1;
-  document.getElementById('hero-sub').textContent = T.heroSub;
-  document.getElementById('hero-ar').textContent = T.heroAr;
-  document.getElementById('hero-btn1').textContent = T.heroBtn1;
-  document.getElementById('hero-btn2').textContent = T.heroBtn2;
-  document.getElementById('pain-h2').textContent = T.painH2;
-  document.getElementById('pain-sub').textContent = T.painSub;
-  document.getElementById('pain1-h').textContent = T.pain1H;
-  document.getElementById('pain1-p').textContent = T.pain1P;
-  document.getElementById('pain2-h').textContent = T.pain2H;
-  document.getElementById('pain2-p').textContent = T.pain2P;
-  document.getElementById('pain3-h').textContent = T.pain3H;
-  document.getElementById('pain3-p').textContent = T.pain3P;
-  document.getElementById('sol-h2').textContent = T.solH2;
-  document.getElementById('sol-sub').textContent = T.solSub;
-  document.getElementById('f1-h').textContent = T.f1H; document.getElementById('f1-p').textContent = T.f1P;
-  document.getElementById('f2-h').textContent = T.f2H; document.getElementById('f2-p').textContent = T.f2P;
-  document.getElementById('f3-h').textContent = T.f3H; document.getElementById('f3-p').textContent = T.f3P;
-  document.getElementById('f4-h').textContent = T.f4H; document.getElementById('f4-p').textContent = T.f4P;
-  document.getElementById('f5-h').textContent = T.f5H; document.getElementById('f5-p').textContent = T.f5P;
-  document.getElementById('f6-h').textContent = T.f6H; document.getElementById('f6-p').textContent = T.f6P;
-  document.getElementById('how-h2').textContent = T.howH2;
-  document.getElementById('how-sub').textContent = T.howSub;
-  document.getElementById('s1-h').textContent = T.s1H; document.getElementById('s1-p').textContent = T.s1P;
-  document.getElementById('s2-h').textContent = T.s2H; document.getElementById('s2-p').textContent = T.s2P;
-  document.getElementById('s3-h').textContent = T.s3H; document.getElementById('s3-p').textContent = T.s3P;
-  document.getElementById('cta-h2').textContent = T.ctaH2;
-  document.getElementById('cta-p').textContent = T.ctaP;
-  document.getElementById('cta-ar').textContent = T.ctaAr;
-  document.getElementById('cta-btn').textContent = T.ctaBtn;
-  document.getElementById('footer-text').textContent = T.footerText;
-  document.getElementById('footer-staff').textContent = T.staffLogin;
-  document.getElementById('footer-admin').textContent = T.admin;
+  document.body.dir = l==='ar' ? 'rtl' : 'ltr';
+  document.querySelectorAll('.lang-btn').forEach((b,i) => {
+    b.classList.toggle('active', i===(l==='en'?0:1));
+  });
+  const t = T[l];
+  document.getElementById('nav-features').textContent = t.navFeatures;
+  document.getElementById('nav-how').textContent = t.navHow;
+  document.getElementById('nav-cta').textContent = t.navCta;
+  document.getElementById('hero-badge').textContent = t.heroBadge;
+  document.getElementById('hero-h1').innerHTML = t.heroH1;
+  document.getElementById('hero-sub').textContent = t.heroSub;
+  document.getElementById('hero-btn1').textContent = t.heroBtn1;
+  document.getElementById('hero-btn2').textContent = t.heroBtn2;
+  document.getElementById('mock-wa-text').innerHTML = t.mockWa;
+  document.getElementById('pain-h2').textContent = t.painH2;
+  document.getElementById('pain-sub').textContent = t.painSub;
+  document.getElementById('pain1-h').textContent = t.pain1H;
+  document.getElementById('pain1-p').textContent = t.pain1P;
+  document.getElementById('pain2-h').textContent = t.pain2H;
+  document.getElementById('pain2-p').textContent = t.pain2P;
+  document.getElementById('pain3-h').textContent = t.pain3H;
+  document.getElementById('pain3-p').textContent = t.pain3P;
+  document.getElementById('sol-h2').textContent = t.solH2;
+  document.getElementById('sol-sub').textContent = t.solSub;
+  document.getElementById('f1-h').textContent = t.f1H; document.getElementById('f1-p').textContent = t.f1P;
+  document.getElementById('f2-h').textContent = t.f2H; document.getElementById('f2-p').textContent = t.f2P;
+  document.getElementById('f3-h').textContent = t.f3H; document.getElementById('f3-p').textContent = t.f3P;
+  document.getElementById('f4-h').textContent = t.f4H; document.getElementById('f4-p').textContent = t.f4P;
+  document.getElementById('f5-h').textContent = t.f5H; document.getElementById('f5-p').textContent = t.f5P;
+  document.getElementById('f6-h').textContent = t.f6H; document.getElementById('f6-p').textContent = t.f6P;
+  document.getElementById('how-h2').textContent = t.howH2;
+  document.getElementById('how-sub').textContent = t.howSub;
+  document.getElementById('s1-h').textContent = t.s1H; document.getElementById('s1-p').textContent = t.s1P;
+  document.getElementById('s2-h').textContent = t.s2H; document.getElementById('s2-p').textContent = t.s2P;
+  document.getElementById('s3-h').textContent = t.s3H; document.getElementById('s3-p').textContent = t.s3P;
+  document.getElementById('cta-h2').textContent = t.ctaH2;
+  document.getElementById('cta-p').textContent = t.ctaP;
+  document.getElementById('cta-p2').textContent = t.ctaP2;
+  document.getElementById('cta-p2').style.direction = l==='ar' ? 'ltr' : 'rtl';
+  document.getElementById('cta-btn-text').textContent = t.ctaBtn;
+  document.getElementById('footer-text').textContent = t.footerText;
+  document.getElementById('footer-staff').textContent = t.staffLogin;
+  document.getElementById('footer-admin').textContent = t.admin;
 }
 </script>
 </body>
