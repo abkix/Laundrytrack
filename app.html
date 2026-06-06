@@ -1,3 +1,6 @@
+
+raw
+App · HTML
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -165,6 +168,7 @@ body { background: #f5f5f4; color: #1c1c1a; }
   <div class="modal">
     <h3 id="modal-title">New Order</h3>
     <div class="form-row"><label id="lbl-name">Customer Name</label><input type="text" id="f-name" placeholder="Ahmed"></div>
+    <div class="form-row"><label id="lbl-invoice">Invoice / Reference No. <span style="color:#aaa;font-weight:400;">(optional)</span></label><input type="text" id="f-invoice" placeholder="e.g. INV-2045"></div>
     <div class="form-row"><label id="lbl-phone">WhatsApp Number</label><input type="text" id="f-phone" placeholder="5xxx xxxx"></div>
     <div class="form-row">
       <label id="lbl-items">Items</label>
@@ -219,15 +223,30 @@ const AR_SERVICE = { wash_iron:'غسيل وكوي', wash_only:'غسيل فقط',
 const AR_COLLECTION = { collect:'استلام من المحل', delivery:'توصيل للعميل' };
 const ALL_STATUSES_EN = ['Received','Washing','Ironing','Dry Cleaning','Ready','Collected','Delivered'];
  
-const LAUNDRY_ITEMS = [
-  {en:'Thoob',ar:'ثوب'},{en:'Qotraa',ar:'قطرة'},{en:'Abaya',ar:'عباءة'},
-  {en:'Shirt',ar:'قميص'},{en:'Pants',ar:'بنطلون'},{en:'Jacket',ar:'جاكيت'},
-  {en:'Suit',ar:'بدلة'},{en:'T-Shirt',ar:'تيشيرت'},{en:'Dress',ar:'فستان'},
-  {en:'Skirt',ar:'تنورة'},{en:'Shorts',ar:'شورت'},{en:'Socks',ar:'جوارب'},
-  {en:'Hat',ar:'قبعة'},{en:'Cap',ar:'كاب'},{en:'Tie',ar:'ربطة عنق'},
-  {en:'Scarf',ar:'وشاح'},{en:'Belt',ar:'حزام'},{en:'Bedsheet',ar:'ملاءة'},
-  {en:'Blanket',ar:'بطانية'},{en:'Curtain',ar:'ستارة'},
-  {en:'Pillow Cover',ar:'كيس وسادة'},{en:'Carpet',ar:'سجادة'},
+const LAUNDRY_GROUPS = [
+  {
+    label: '👕 Clothes', labelAr: '👕 ملابس',
+    items: [
+      {en:'Thoob',ar:'ثوب'},{en:'Qotraa',ar:'قطرة'},{en:'Abaya',ar:'عباءة'},
+      {en:'Shirt',ar:'قميص'},{en:'T-Shirt',ar:'تيشيرت'},{en:'Pants',ar:'بنطلون'},
+      {en:'Shorts',ar:'شورت'},{en:'Jacket',ar:'جاكيت'},{en:'Suit',ar:'بدلة'},
+      {en:'Dress',ar:'فستان'},{en:'Skirt',ar:'تنورة'},
+    ]
+  },
+  {
+    label: '👟 Accessories', labelAr: '👟 إكسسوارات',
+    items: [
+      {en:'Socks',ar:'جوارب'},{en:'Hat',ar:'قبعة'},{en:'Cap',ar:'كاب'},
+      {en:'Tie',ar:'ربطة عنق'},{en:'Scarf',ar:'وشاح'},{en:'Belt',ar:'حزام'},
+    ]
+  },
+  {
+    label: '🏠 Home Items', labelAr: '🏠 مفروشات',
+    items: [
+      {en:'Bedsheet',ar:'ملاءة'},{en:'Blanket',ar:'بطانية'},{en:'Curtain',ar:'ستارة'},
+      {en:'Pillow Cover',ar:'كيس وسادة'},{en:'Carpet',ar:'سجادة'},
+    ]
+  },
 ];
  
 function getPipeline(s,c){ return [...SERVICE_PIPELINES[s], COLLECTION_STEP[c]]; }
@@ -398,14 +417,18 @@ function updatePipelinePreview(){
 function addItemRow(selectedItem='Thoob', qty=1) {
   const list = document.getElementById('items-list');
   const id = 'item-' + Date.now() + Math.random().toString(36).slice(2);
-  const options = LAUNDRY_ITEMS.map(i =>
-    `<option value="${i.en}" ${i.en===selectedItem?'selected':''}>${i.en} / ${i.ar}</option>`
-  ).join('');
+  const optgroups = LAUNDRY_GROUPS.map(g => {
+    const groupLabel = lang==='ar' ? g.labelAr : g.label;
+    const options = g.items.map(i =>
+      `<option value="${i.en}" ${i.en===selectedItem?'selected':''}>${i.en} / ${i.ar}</option>`
+    ).join('');
+    return `<optgroup label="${groupLabel}">${options}</optgroup>`;
+  }).join('');
   const div = document.createElement('div');
   div.className = 'item-row';
   div.id = id;
   div.innerHTML = `
-    <select>${options}</select>
+    <select>${optgroups}</select>
     <div class="item-qty">
       <button type="button" class="qty-btn" onclick="changeQty('${id}',-1)">−</button>
       <span class="qty-num">${qty}</span>
@@ -458,7 +481,7 @@ function renderOrders(){
       <div class="order-num">#${String(o.id).padStart(3,'0')}</div>
       <div class="order-body">
         <div><div class="order-name">${o.customer_name}</div>
-        <div class="order-meta"><span>${o.items}</span> · <span>${svcLabel}</span> · <span>${colLabel}</span> · <span>${o.order_time}</span>${o.priority==='urgent'?` <span class="urgent-badge">${lang==='ar'?'عاجل':'URGENT'}</span>`:''}</div></div>
+        <div class="order-meta"><span>${o.items}</span> · <span>${svcLabel}</span> · <span>${colLabel}</span> · <span>${o.order_time}</span>${o.invoice_ref?` · <span style='color:#4A9FD4;font-weight:500;'>Ref: ${o.invoice_ref}</span>`:''}${o.priority==='urgent'?` <span class="urgent-badge">${lang==='ar'?'عاجل':'URGENT'}</span>`:''}</div></div>
         <div class="order-row2"><div class="status-steps">${stepsHtml}</div>
         <div class="order-actions"><button class="advance-btn" onclick="advanceOrder(${o.id})" ${isDone?'disabled':''}>${advLabel}</button></div></div>
       </div></div>`;
@@ -504,7 +527,7 @@ function openModal(){
  
 function closeModal(){
   document.getElementById('modal').classList.remove('open');
-  ['f-name','f-phone'].forEach(id=>document.getElementById(id).value='');
+  ['f-name','f-phone','f-invoice'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('items-list').innerHTML='';
 }
  
@@ -526,7 +549,8 @@ async function addOrder(){
   const btn=document.getElementById('btn-submit');btn.disabled=true;btn.textContent='...';
   const now=new Date(),time=now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0');
   try{
-    const saved=await saveOrder({customer_name:name,phone,items,service:document.getElementById('f-type').value,collection:document.getElementById('f-collection').value,priority:document.getElementById('f-priority').value,status_idx:0,order_time:time});
+    const invoice=document.getElementById('f-invoice').value.trim();
+    const saved=await saveOrder({customer_name:name,phone,items,service:document.getElementById('f-type').value,collection:document.getElementById('f-collection').value,priority:document.getElementById('f-priority').value,status_idx:0,order_time:time,invoice_ref:invoice||null});
     orders.unshift(saved);closeModal();showToast('Order saved!',false);updateMetrics();renderOrders();
     const laundryName=await getLaundryName();
     const trackUrl=`${window.location.origin}/track.html?token=${saved.tracking_token}`;
