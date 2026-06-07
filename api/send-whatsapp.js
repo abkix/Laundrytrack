@@ -6,7 +6,7 @@ export default async function handler(req, res) {
 
   const accountSid = process.env.TWILIO_ACCOUNT_SID;
   const authToken = process.env.TWILIO_AUTH_TOKEN;
-  const from = 'whatsapp:+14155238886';
+  const from = 'whatsapp:+97466633779';
   const credentials = Buffer.from(`${accountSid}:${authToken}`).toString('base64');
 
   try {
