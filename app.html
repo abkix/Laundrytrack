@@ -636,7 +636,7 @@ function renderCustomers() {
   }).join('');
 }
 
-function getLaundryId(){
+async function getLaundryId(){
   try {
     const res = await fetch(`${SUPABASE_URL}/rest/v1/laundries?email=eq.${encodeURIComponent(currentUser.email)}`, { headers: getAuthHeaders() });
     const data = await res.json();
