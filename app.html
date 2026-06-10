@@ -51,6 +51,9 @@ body { background: #f5f5f4; color: #1c1c1a; }
 .filter-btn.active { background: #4A9FD4; color: #fff; border-color: #4A9FD4; }
 .new-order-btn { display: flex; align-items: center; gap: 6px; padding: 7px 14px; font-size: 13px; font-weight: 500; background: #4A9FD4; color: #fff; border: none; border-radius: 8px; cursor: pointer; white-space: nowrap; }
 .orders { padding: 1rem 1.25rem; display: flex; flex-direction: column; gap: 8px; }
+.date-separator { display: flex; align-items: center; gap: 10px; margin: 4px 0 2px; }
+.date-separator-line { flex: 1; height: 0.5px; background: #e0e0de; }
+.date-separator-label { font-size: 12px; font-weight: 500; color: #888; white-space: nowrap; padding: 0 4px; }
 .order-card { background: #fff; border: 0.5px solid #e0e0de; border-radius: 12px; padding: 1rem 1.25rem; display: grid; grid-template-columns: 48px 1fr; gap: 12px; }
 .order-card.urgent { border-left: 3px solid #E24B4A; }
 .order-num { font-size: 13px; font-weight: 500; color: #888; padding-top: 2px; }
@@ -327,8 +330,7 @@ document.getElementById('login-email').addEventListener('keydown', e => { if(e.k
 
 async function fetchOrders() {
   try {
-    const today = new Date().toISOString().split('T')[0];
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/orders?created_at=gte.${today}T00:00:00&laundry_id=eq.${currentUser.id}&order=created_at.desc`, { headers: getAuthHeaders() });
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/orders?laundry_id=eq.${currentUser.id}&order=created_at.desc`, { headers: getAuthHeaders() });
     if (!res.ok) throw new Error();
     orders = await res.json(); updateMetrics(); renderOrders();
   } catch {
@@ -400,10 +402,12 @@ function setLang(l) {
 function setFilter(f){ activeFilter=f; buildFilterBtns(); renderOrders(); }
 
 function updateMetrics(){
-  document.getElementById('m1v').textContent=orders.length;
-  document.getElementById('m2v').textContent=orders.filter(o=>{const p=getPipeline(o.service,o.collection);return o.status_idx>0&&o.status_idx<p.length-1;}).length;
-  document.getElementById('m3v').textContent=orders.filter(o=>getPipeline(o.service,o.collection)[o.status_idx]==='Ready').length;
-  document.getElementById('m4v').textContent=orders.filter(o=>o.priority==='urgent').length;
+  const today = new Date().toISOString().split('T')[0];
+  const todayOrders = orders.filter(o => o.created_at && o.created_at.startsWith(today));
+  document.getElementById('m1v').textContent=todayOrders.length;
+  document.getElementById('m2v').textContent=todayOrders.filter(o=>{const p=getPipeline(o.service,o.collection);return o.status_idx>0&&o.status_idx<p.length-1;}).length;
+  document.getElementById('m3v').textContent=todayOrders.filter(o=>getPipeline(o.service,o.collection)[o.status_idx]==='Ready').length;
+  document.getElementById('m4v').textContent=todayOrders.filter(o=>o.priority==='urgent').length;
 }
 
 function updatePipelinePreview(){
@@ -457,6 +461,14 @@ function getItemsString() {
   }).join(', ');
 }
 
+function getDateLabel(dateStr) {
+  const today = new Date().toISOString().split('T')[0];
+  const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
+  if (dateStr === today) return lang==='ar' ? 'اليوم' : 'Today';
+  if (dateStr === yesterday) return lang==='ar' ? 'أمس' : 'Yesterday';
+  return new Date(dateStr).toLocaleDateString(lang==='ar'?'ar-QA':'en-GB', {weekday:'long', day:'numeric', month:'long'});
+}
+
 function renderOrders(){
   const q=document.getElementById('search-input').value.toLowerCase();
   const list=document.getElementById('orders-list');
@@ -465,24 +477,42 @@ function renderOrders(){
     return (activeFilter==='all'||pipe[o.status_idx]===activeFilter)&&(!q||o.customer_name.toLowerCase().includes(q)||String(o.id).includes(q));
   });
   if(!filtered.length){list.innerHTML=`<div class="loading-state">${lang==='ar'?'لا توجد طلبات':'No orders yet — add your first one!'}</div>`;return;}
-  list.innerHTML=filtered.map(o=>{
-    const pipe=getPipeline(o.service,o.collection),isDone=o.status_idx>=pipe.length-1;
-    const stepsHtml=pipe.map((s,i)=>{
-      const done=i<o.status_idx,active=i===o.status_idx,icon=STEP_ICONS[s]||'•';
-      return `<div class="step"><div class="step-inner"><div class="step-dot${done?' done':active?' active':''}">${done?'✓':icon}</div><div class="step-label${done?' done':active?' active':''}">${statusLabel(s)}</div></div>${i<pipe.length-1?`<div class="step-connector${done?' done':''}"></div>`:''}</div>`;
-    }).join('');
-    const svcLabel=lang==='ar'?AR_SERVICE[o.service]:o.service.replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase());
-    const colLabel=lang==='ar'?AR_COLLECTION[o.collection]:(o.collection==='collect'?'Collect':'Delivery');
-    const advLabel=isDone?(lang==='ar'?'مكتمل':'Done'):(lang==='ar'?'تقدم →':'Advance →');
-    return `<div class="order-card${o.priority==='urgent'?' urgent':''}">
-      <div class="order-num">#${String(o.id).padStart(3,'0')}</div>
-      <div class="order-body">
-        <div><div class="order-name">${o.customer_name}</div>
-        <div class="order-meta"><span>${o.items}</span> · <span>${svcLabel}</span> · <span>${colLabel}</span> · <span>${o.order_time}</span>${o.invoice_ref?` · <span style='color:#4A9FD4;font-weight:500;'>Ref: ${o.invoice_ref}</span>`:''}${o.priority==='urgent'?` <span class="urgent-badge">${lang==='ar'?'عاجل':'URGENT'}</span>`:''}</div></div>
-        <div class="order-row2"><div class="status-steps">${stepsHtml}</div>
-        <div class="order-actions"><button class="advance-btn" onclick="advanceOrder(${o.id})" ${isDone?'disabled':''}>${advLabel}</button></div></div>
-      </div></div>`;
-  }).join('');
+
+  // Group by date
+  const groups = {};
+  filtered.forEach(o => {
+    const date = o.created_at ? o.created_at.split('T')[0] : new Date().toISOString().split('T')[0];
+    if (!groups[date]) groups[date] = [];
+    groups[date].push(o);
+  });
+
+  let html = '';
+  Object.keys(groups).sort((a,b) => b.localeCompare(a)).forEach(date => {
+    const label = getDateLabel(date);
+    const count = groups[date].length;
+    html += `<div class="date-separator"><div class="date-separator-line"></div><div class="date-separator-label">${label} · ${count} ${lang==='ar'?'طلب':'order'}${count!==1&&lang!=='ar'?'s':''}</div><div class="date-separator-line"></div></div>`;
+
+    groups[date].forEach(o => {
+      const pipe=getPipeline(o.service,o.collection),isDone=o.status_idx>=pipe.length-1;
+      const stepsHtml=pipe.map((s,i)=>{
+        const done=i<o.status_idx,active=i===o.status_idx,icon=STEP_ICONS[s]||'•';
+        return `<div class="step"><div class="step-inner"><div class="step-dot${done?' done':active?' active':''}">${done?'✓':icon}</div><div class="step-label${done?' done':active?' active':''}">${statusLabel(s)}</div></div>${i<pipe.length-1?`<div class="step-connector${done?' done':''}"></div>`:''}</div>`;
+      }).join('');
+      const svcLabel=lang==='ar'?AR_SERVICE[o.service]:o.service.replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase());
+      const colLabel=lang==='ar'?AR_COLLECTION[o.collection]:(o.collection==='collect'?'Collect':'Delivery');
+      const advLabel=isDone?(lang==='ar'?'مكتمل':'Done'):(lang==='ar'?'تقدم →':'Advance →');
+      html += `<div class="order-card${o.priority==='urgent'?' urgent':''}">
+        <div class="order-num">#${String(o.id).padStart(3,'0')}</div>
+        <div class="order-body">
+          <div><div class="order-name">${o.customer_name}</div>
+          <div class="order-meta"><span>${o.items}</span> · <span>${svcLabel}</span> · <span>${colLabel}</span> · <span>${o.order_time}</span>${o.invoice_ref?` · <span style='color:#4A9FD4;font-weight:500;'>Ref: ${o.invoice_ref}</span>`:''}${o.priority==='urgent'?` <span class="urgent-badge">${lang==='ar'?'عاجل':'URGENT'}</span>`:''}</div></div>
+          <div class="order-row2"><div class="status-steps">${stepsHtml}</div>
+          <div class="order-actions"><button class="advance-btn" onclick="advanceOrder(${o.id})" ${isDone?'disabled':''}>${advLabel}</button></div></div>
+        </div></div>`;
+    });
+  });
+
+  list.innerHTML = html;
 }
 
 async function advanceOrder(id){
