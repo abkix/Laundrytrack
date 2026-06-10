@@ -50,6 +50,17 @@ body { background: #f5f5f4; color: #1c1c1a; }
 .filter-btn { padding: 5px 11px; font-size: 12px; border: 0.5px solid #ddd; border-radius: 20px; background: transparent; cursor: pointer; white-space: nowrap; color: #555; }
 .filter-btn.active { background: #4A9FD4; color: #fff; border-color: #4A9FD4; }
 .new-order-btn { display: flex; align-items: center; gap: 6px; padding: 7px 14px; font-size: 13px; font-weight: 500; background: #4A9FD4; color: #fff; border: none; border-radius: 8px; cursor: pointer; white-space: nowrap; }
+.tabs { display: flex; background: #fff; border-bottom: 0.5px solid #e0e0de; padding: 0 1.25rem; }
+.tab-btn { padding: 10px 16px; font-size: 13px; font-weight: 500; border: none; background: transparent; color: #888; cursor: pointer; border-bottom: 2.5px solid transparent; margin-bottom: -0.5px; }
+.tab-btn.active { color: #4A9FD4; border-bottom-color: #4A9FD4; }
+.customers-view { padding: 1rem 1.25rem; display: flex; flex-direction: column; gap: 8px; display: none; }
+.customers-view.show { display: flex; }
+.customer-card { background: #fff; border: 0.5px solid #e0e0de; border-radius: 12px; padding: 1rem 1.25rem; display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.customer-name { font-size: 14px; font-weight: 500; }
+.customer-phone { font-size: 12px; color: #888; margin-top: 3px; }
+.customer-orders-count { font-size: 20px; font-weight: 500; color: #4A9FD4; text-align: right; }
+.customer-orders-label { font-size: 11px; color: #aaa; text-align: right; }
+.customer-search { width: 100%; padding: 7px 12px; font-size: 14px; border: 0.5px solid #ccc; border-radius: 8px; background: #f5f5f4; }
 .orders { padding: 1rem 1.25rem; display: flex; flex-direction: column; gap: 8px; }
 .date-separator { display: flex; align-items: center; gap: 10px; margin: 4px 0 2px; }
 .date-separator-line { flex: 1; height: 0.5px; background: #e0e0de; }
@@ -151,7 +162,12 @@ body { background: #f5f5f4; color: #1c1c1a; }
     <div class="metric"><div class="metric-label" id="m4">Urgent</div><div class="metric-value amber" id="m4v">—</div></div>
   </div>
 
-  <div class="toolbar">
+  <div class="tabs">
+    <button class="tab-btn active" id="tab-orders" onclick="switchTab('orders')">📋 <span id="tab-orders-lbl">Orders</span></button>
+    <button class="tab-btn" id="tab-customers" onclick="switchTab('customers')">👥 <span id="tab-customers-lbl">Customers</span></button>
+  </div>
+
+  <div class="toolbar" id="orders-toolbar">
     <div class="search-wrap">
       <input type="text" id="search-input" placeholder="Search by name or order #..." oninput="renderOrders()">
     </div>
@@ -161,6 +177,11 @@ body { background: #f5f5f4; color: #1c1c1a; }
 
   <div class="orders" id="orders-list">
     <div class="loading-state"><span class="spinner"></span> Loading orders...</div>
+  </div>
+
+  <div class="customers-view" id="customers-view">
+    <input type="text" class="customer-search" id="customer-search" placeholder="Search customers..." oninput="renderCustomers()">
+    <div id="customers-list"><div class="loading-state"><span class="spinner"></span> Loading customers...</div></div>
   </div>
 </div>
 
@@ -375,6 +396,8 @@ function setLang(l) {
   document.body.dir=l==='ar'?'rtl':'ltr';
   const A=l==='ar';
   document.getElementById('brand-sub').textContent=A?'إدارة المغسلة':'Laundry Management';
+  document.getElementById('tab-orders-lbl').textContent=A?'الطلبات':'Orders';
+  document.getElementById('tab-customers-lbl').textContent=A?'العملاء':'Customers';
   document.getElementById('m1').textContent=A?'إجمالي اليوم':'Total Today';
   document.getElementById('m2').textContent=A?'جارٍ':'In Progress';
   document.getElementById('m3').textContent=A?'جاهز':'Ready';
@@ -565,7 +588,55 @@ function formatPhone(p){
   return '+974'+p;
 }
 
-async function getLaundryId(){
+async let customers = [], activeTab = 'orders';
+
+function switchTab(tab) {
+  activeTab = tab;
+  document.getElementById('tab-orders').classList.toggle('active', tab === 'orders');
+  document.getElementById('tab-customers').classList.toggle('active', tab === 'customers');
+  document.getElementById('orders-toolbar').style.display = tab === 'orders' ? 'flex' : 'none';
+  document.getElementById('orders-list').style.display = tab === 'orders' ? 'flex' : 'none';
+  document.getElementById('customers-view').classList.toggle('show', tab === 'customers');
+  if (tab === 'customers') fetchCustomers();
+}
+
+async function fetchCustomers() {
+  try {
+    const laundryId = await getLaundryId();
+    if (!laundryId) return;
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/customers?laundry_id=eq.${laundryId}&order=created_at.desc`, { headers: getAuthHeaders() });
+    customers = await res.json();
+    renderCustomers();
+  } catch {
+    document.getElementById('customers-list').innerHTML = '<div class="loading-state" style="color:#A32D2D">Could not load customers.</div>';
+  }
+}
+
+function renderCustomers() {
+  const q = document.getElementById('customer-search').value.toLowerCase();
+  const list = document.getElementById('customers-list');
+  const filtered = customers.filter(c => !q || c.name.toLowerCase().includes(q) || c.phone.includes(q));
+  if (!filtered.length) { list.innerHTML = `<div class="loading-state">${lang==='ar'?'لا يوجد عملاء':'No customers yet'}</div>`; return; }
+  const orderCounts = {};
+  orders.forEach(o => { const p = o.phone; orderCounts[p] = (orderCounts[p] || 0) + 1; });
+  list.innerHTML = filtered.map(c => {
+    const count = orderCounts[c.phone] || 0;
+    const lastOrder = orders.filter(o => o.phone === c.phone).sort((a,b) => new Date(b.created_at) - new Date(a.created_at))[0];
+    const lastDate = lastOrder ? new Date(lastOrder.created_at).toLocaleDateString(lang==='ar'?'ar-QA':'en-GB', {day:'numeric',month:'short'}) : '—';
+    return `<div class="customer-card">
+      <div>
+        <div class="customer-name">${c.name}</div>
+        <div class="customer-phone">${c.phone} · ${lang==='ar'?'آخر زيارة':'last visit'}: ${lastDate}</div>
+      </div>
+      <div>
+        <div class="customer-orders-count">${count}</div>
+        <div class="customer-orders-label">${lang==='ar'?'طلب':'order'}${count!==1&&lang!=='ar'?'s':''}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function getLaundryId(){
   try {
     const res = await fetch(`${SUPABASE_URL}/rest/v1/laundries?email=eq.${encodeURIComponent(currentUser.email)}`, { headers: getAuthHeaders() });
     const data = await res.json();
