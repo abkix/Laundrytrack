@@ -565,6 +565,24 @@ function formatPhone(p){
   return '+974'+p;
 }
 
+async function upsertCustomer(name, phone){
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/customers?laundry_id=eq.${currentUser.id}&phone=eq.${encodeURIComponent(phone)}`, { headers: getAuthHeaders() });
+    const existing = await res.json();
+    if (existing.length) {
+      await fetch(`${SUPABASE_URL}/rest/v1/customers?id=eq.${existing[0].id}`, {
+        method: 'PATCH', headers: { ...getAuthHeaders(), 'Prefer': 'return=minimal' },
+        body: JSON.stringify({ name })
+      });
+    } else {
+      await fetch(`${SUPABASE_URL}/rest/v1/customers`, {
+        method: 'POST', headers: { ...getAuthHeaders(), 'Prefer': 'return=minimal' },
+        body: JSON.stringify({ laundry_id: currentUser.id, name, phone })
+      });
+    }
+  } catch(e){ console.log('Customer upsert failed:', e); }
+}
+
 async function addOrder(){
   const name=document.getElementById('f-name').value.trim();
   const rawPhone=document.getElementById('f-phone').value.trim();
@@ -578,6 +596,7 @@ async function addOrder(){
     const invoice=document.getElementById('f-invoice').value.trim();
     const saved=await saveOrder({customer_name:name,phone,items,service:document.getElementById('f-type').value,collection:document.getElementById('f-collection').value,priority:document.getElementById('f-priority').value,status_idx:0,order_time:time,invoice_ref:invoice||null});
     orders.unshift(saved);closeModal();showToast('Order saved!',false);updateMetrics();renderOrders();
+    await upsertCustomer(name, phone);
     const laundryName=await getLaundryName();
     const trackUrl=`${window.location.origin}/track.html?token=${saved.tracking_token}`;
     await sendWhatsApp(phone,'order_received',name,laundryName,trackUrl);
