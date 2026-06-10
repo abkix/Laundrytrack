@@ -626,7 +626,7 @@ function renderCustomers() {
     return `<div class="customer-card">
       <div>
         <div class="customer-name">${c.name}</div>
-        <div class="customer-phone">${c.phone} · ${lang==='ar'?'آخر زيارة':'last visit'}: ${lastDate}</div>
+        <div class="customer-phone">${c.phone} · ${lang==='ar'?'آخر طلب':'last order'}: ${lastDate}</div>
       </div>
       <div>
         <div class="customer-orders-count">${count}</div>
