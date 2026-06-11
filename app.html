@@ -87,6 +87,9 @@ body { background: #f5f5f4; color: #1c1c1a; }
 .order-actions { display: flex; gap: 6px; align-items: center; flex-shrink: 0; }
 .advance-btn { padding: 6px 12px; font-size: 12px; font-weight: 500; background: #4A9FD4; color: #fff; border: none; border-radius: 8px; cursor: pointer; white-space: nowrap; }
 .advance-btn:disabled { background: #eee; color: #aaa; cursor: default; }
+.paid-btn { padding: 6px 12px; font-size: 12px; font-weight: 500; border: 1.5px solid #27AE60; color: #27AE60; background: transparent; border-radius: 8px; cursor: pointer; white-space: nowrap; }
+.paid-btn.paid { background: #27AE60; color: #fff; border-color: #27AE60; }
+.paid-btn.unpaid { border-color: #ccc; color: #aaa; }
 .modal-backdrop { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 100; align-items: flex-start; justify-content: center; padding: 20px; overflow-y: auto; }
 .modal-backdrop.open { display: flex; }
 .modal { background: #fff; border-radius: 12px; border: 0.5px solid #ddd; padding: 1.25rem; width: 380px; max-width: 92vw; margin: auto; }
@@ -159,7 +162,7 @@ body { background: #f5f5f4; color: #1c1c1a; }
     <div class="metric"><div class="metric-label" id="m1">Total Today</div><div class="metric-value" id="m1v">—</div></div>
     <div class="metric"><div class="metric-label" id="m2">In Progress</div><div class="metric-value blue" id="m2v">—</div></div>
     <div class="metric"><div class="metric-label" id="m3">Ready</div><div class="metric-value green" id="m3v">—</div></div>
-    <div class="metric"><div class="metric-label" id="m4">Urgent</div><div class="metric-value amber" id="m4v">—</div></div>
+    <div class="metric"><div class="metric-label" id="m4">Unpaid</div><div class="metric-value amber" id="m4v">—</div></div>
   </div>
 
   <div class="tabs">
@@ -401,7 +404,7 @@ function setLang(l) {
   document.getElementById('m1').textContent=A?'إجمالي اليوم':'Total Today';
   document.getElementById('m2').textContent=A?'جارٍ':'In Progress';
   document.getElementById('m3').textContent=A?'جاهز':'Ready';
-  document.getElementById('m4').textContent=A?'عاجل':'Urgent';
+  document.getElementById('m4').textContent=A?'غير مدفوع':'Unpaid';
   document.getElementById('btn-new').textContent=A?'طلب جديد':'New Order';
   document.getElementById('modal-title').textContent=A?'طلب جديد':'New Order';
   document.getElementById('lbl-name').textContent=A?'اسم العميل':'Customer Name';
@@ -430,7 +433,7 @@ function updateMetrics(){
   document.getElementById('m1v').textContent=todayOrders.length;
   document.getElementById('m2v').textContent=todayOrders.filter(o=>{const p=getPipeline(o.service,o.collection);return o.status_idx>0&&o.status_idx<p.length-1;}).length;
   document.getElementById('m3v').textContent=todayOrders.filter(o=>getPipeline(o.service,o.collection)[o.status_idx]==='Ready').length;
-  document.getElementById('m4v').textContent=todayOrders.filter(o=>o.priority==='urgent').length;
+  document.getElementById('m4v').textContent=todayOrders.filter(o=>!o.paid).length;
 }
 
 function updatePipelinePreview(){
@@ -524,18 +527,37 @@ function renderOrders(){
       const svcLabel=lang==='ar'?AR_SERVICE[o.service]:o.service.replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase());
       const colLabel=lang==='ar'?AR_COLLECTION[o.collection]:(o.collection==='collect'?'Collect':'Delivery');
       const advLabel=isDone?(lang==='ar'?'مكتمل':'Done'):(lang==='ar'?'تقدم →':'Advance →');
+      const paidLabel=o.paid?(lang==='ar'?'✓ مدفوع':'✓ Paid'):(lang==='ar'?'غير مدفوع':'Unpaid');
       html += `<div class="order-card${o.priority==='urgent'?' urgent':''}">
         <div class="order-num">#${String(o.id).padStart(3,'0')}</div>
         <div class="order-body">
           <div><div class="order-name">${o.customer_name}</div>
           <div class="order-meta"><span>${o.items}</span> · <span>${svcLabel}</span> · <span>${colLabel}</span> · <span>${o.order_time}</span>${o.invoice_ref?` · <span style='color:#4A9FD4;font-weight:500;'>Ref: ${o.invoice_ref}</span>`:''}${o.priority==='urgent'?` <span class="urgent-badge">${lang==='ar'?'عاجل':'URGENT'}</span>`:''}</div></div>
           <div class="order-row2"><div class="status-steps">${stepsHtml}</div>
-          <div class="order-actions"><button class="advance-btn" onclick="advanceOrder(${o.id})" ${isDone?'disabled':''}>${advLabel}</button></div></div>
+          <div class="order-actions">
+            <button class="paid-btn ${o.paid?'paid':'unpaid'}" onclick="togglePaid(${o.id})">${paidLabel}</button>
+            <button class="advance-btn" onclick="advanceOrder(${o.id})" ${isDone?'disabled':''}>${advLabel}</button>
+          </div></div>
         </div></div>`;
     });
   });
 
   list.innerHTML = html;
+}
+
+async function togglePaid(id){
+  const o=orders.find(x=>x.id===id); if(!o) return;
+  const newPaid = !o.paid;
+  try{
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/orders?id=eq.${id}`, {
+      method: 'PATCH', headers: { ...getAuthHeaders(), 'Prefer': 'return=minimal' },
+      body: JSON.stringify({ paid: newPaid })
+    });
+    if(!res.ok) throw new Error();
+    o.paid = newPaid;
+    showToast(newPaid?(lang==='ar'?'تم تسجيل الدفع':'Marked as paid'):(lang==='ar'?'تم إلغاء الدفع':'Marked as unpaid'), false);
+    renderOrders();
+  } catch{ showToast('Failed to update payment.', true); }
 }
 
 async function advanceOrder(id){
