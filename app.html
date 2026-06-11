@@ -169,6 +169,7 @@ body { background: #f5f5f4; color: #1c1c1a; }
     <button class="tab-btn active" id="tab-orders" onclick="switchTab('orders')">📋 <span id="tab-orders-lbl">Orders</span></button>
     <button class="tab-btn" id="tab-customers" onclick="switchTab('customers')">👥 <span id="tab-customers-lbl">Customers</span></button>
     <button class="tab-btn" id="tab-reports" onclick="switchTab('reports')">📊 <span id="tab-reports-lbl">Reports</span></button>
+    <button class="tab-btn" id="tab-prices" onclick="switchTab('prices')">⚙️ <span id="tab-prices-lbl">Prices</span></button>
   </div>
 
   <div class="toolbar" id="orders-toolbar">
@@ -196,6 +197,20 @@ body { background: #f5f5f4; color: #1c1c1a; }
     </div>
     <div id="report-content"><div class="loading-state">Loading report...</div></div>
   </div>
+
+  <div class="customers-view" id="prices-view">
+    <div style="background:#fff;border:0.5px solid #e0e0de;border-radius:12px;padding:1rem 1.25rem;overflow-x:auto;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px;">
+        <div style="font-size:14px;font-weight:600;" id="prices-title">Price Settings</div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <label style="font-size:12px;color:#888;" id="lbl-urgent-pct">Urgent surcharge %</label>
+          <input type="number" id="urgent-pct" style="width:70px;padding:5px 8px;font-size:13px;border:0.5px solid #ccc;border-radius:6px;" min="0" step="5">
+          <button class="btn-submit" onclick="savePrices()" id="btn-save-prices">Save Prices</button>
+        </div>
+      </div>
+      <div id="prices-table"><div class="loading-state"><span class="spinner"></span> Loading prices...</div></div>
+    </div>
+  </div>
 </div>
 
 <div class="modal-backdrop" id="modal" onclick="handleBackdropClick(event)">
@@ -212,7 +227,7 @@ body { background: #f5f5f4; color: #1c1c1a; }
     </div>
     <div class="form-row">
       <label id="lbl-type">Service Type</label>
-      <select id="f-type" onchange="updatePipelinePreview()">
+      <select id="f-type" onchange="updatePipelinePreview();calcOrderTotal()">
         <option value="wash_iron">Wash & Iron</option>
         <option value="wash_only">Wash Only</option>
         <option value="iron_only">Iron Only</option>
@@ -228,7 +243,7 @@ body { background: #f5f5f4; color: #1c1c1a; }
     </div>
     <div class="form-row">
       <label id="lbl-priority">Priority</label>
-      <select id="f-priority">
+      <select id="f-priority" onchange="calcOrderTotal()">
         <option value="normal">Normal</option>
         <option value="urgent">Urgent</option>
       </select>
@@ -341,7 +356,7 @@ function doLogout() {
 function showApp() {
   document.getElementById('login-screen').style.display = 'none';
   document.getElementById('app-screen').classList.add('show');
-  buildFilterBtns(); updatePipelinePreview(); fetchOrders();
+  buildFilterBtns(); updatePipelinePreview(); fetchOrders(); loadPrices();
 }
 
 async function checkSession() {
@@ -413,6 +428,10 @@ function setLang(l) {
   document.getElementById('tab-orders-lbl').textContent=A?'الطلبات':'Orders';
   document.getElementById('tab-customers-lbl').textContent=A?'العملاء':'Customers';
   document.getElementById('tab-reports-lbl').textContent=A?'التقارير':'Reports';
+  document.getElementById('tab-prices-lbl').textContent=A?'الأسعار':'Prices';
+  document.getElementById('prices-title').textContent=A?'إعدادات الأسعار':'Price Settings';
+  document.getElementById('lbl-urgent-pct').textContent=A?'رسوم الاستعجال %':'Urgent surcharge %';
+  document.getElementById('btn-save-prices').textContent=A?'حفظ الأسعار':'Save Prices';
   document.getElementById('lbl-price').textContent=A?'السعر (ريال)':'Price (QAR)';
   document.getElementById('m1').textContent=A?'إجمالي اليوم':'Total Today';
   document.getElementById('m2').textContent=A?'جارٍ':'In Progress';
@@ -468,7 +487,7 @@ function addItemRow(selectedItem='Thoob', qty=1) {
   div.className = 'item-row';
   div.id = id;
   div.innerHTML = `
-    <select>${optgroups}</select>
+    <select onchange="calcOrderTotal()">${optgroups}</select>
     <div class="item-qty">
       <button type="button" class="qty-btn" onclick="changeQty('${id}',-1)">−</button>
       <span class="qty-num">${qty}</span>
@@ -477,17 +496,20 @@ function addItemRow(selectedItem='Thoob', qty=1) {
     <button type="button" class="item-remove" onclick="removeItemRow('${id}')">✕</button>
   `;
   list.appendChild(div);
+  calcOrderTotal();
 }
 
 function changeQty(id, delta) {
   const row = document.getElementById(id);
   const span = row.querySelector('.qty-num');
   span.textContent = Math.max(1, parseInt(span.textContent) + delta);
+  calcOrderTotal();
 }
 
 function removeItemRow(id) {
   const row = document.getElementById(id);
   if (row) row.remove();
+  calcOrderTotal();
 }
 
 function getItemsString() {
@@ -630,18 +652,120 @@ function switchTab(tab) {
   document.getElementById('tab-orders').classList.toggle('active', tab === 'orders');
   document.getElementById('tab-customers').classList.toggle('active', tab === 'customers');
   document.getElementById('tab-reports').classList.toggle('active', tab === 'reports');
+  document.getElementById('tab-prices').classList.toggle('active', tab === 'prices');
   document.getElementById('orders-toolbar').style.display = tab === 'orders' ? 'flex' : 'none';
   document.getElementById('orders-list').style.display = tab === 'orders' ? 'flex' : 'none';
   document.getElementById('customers-view').classList.toggle('show', tab === 'customers');
   document.getElementById('reports-view').classList.toggle('show', tab === 'reports');
+  document.getElementById('prices-view').classList.toggle('show', tab === 'prices');
   if (tab === 'customers') fetchCustomers();
   if (tab === 'reports') renderReport();
+  if (tab === 'prices') loadPricesView();
 }
 
 function setReportPeriod(p) {
   reportPeriod = p;
   ['today','week','month'].forEach(k => document.getElementById('rep-'+k).classList.toggle('active', k===p));
   renderReport();
+}
+
+// ===== PRICES =====
+const SERVICES_LIST = ['wash_iron','wash_only','iron_only','dry_clean'];
+const SERVICE_LABELS = { wash_iron:{en:'Wash & Iron',ar:'غسيل وكوي'}, wash_only:{en:'Wash',ar:'غسيل'}, iron_only:{en:'Iron',ar:'كوي'}, dry_clean:{en:'Dry Clean',ar:'تنظيف جاف'} };
+const DEFAULT_BASE = { 'Thoob':10,'Qotraa':6,'Abaya':12,'Shirt':6,'T-Shirt':6,'Pants':8,'Shorts':5,'Jacket':15,'Suit':25,'Dress':15,'Skirt':12,'Socks':2,'Hat':4,'Cap':4,'Tie':5,'Scarf':6,'Belt':4,'Bedsheet':10,'Blanket':20,'Curtain':25,'Pillow Cover':5,'Carpet':30 };
+let pricesMap = {};
+let urgentSurcharge = 50;
+
+function defaultPrice(item, service){
+  const base = DEFAULT_BASE[item] || 5;
+  if (service==='wash_iron') return base;
+  if (service==='wash_only') return Math.round(base*0.7);
+  if (service==='iron_only') return Math.round(base*0.5);
+  return Math.round(base*1.8);
+}
+
+async function loadPrices(){
+  try {
+    const laundryId = await getLaundryId();
+    if (!laundryId) return;
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/prices?laundry_id=eq.${laundryId}`, { headers: getAuthHeaders() });
+    const rows = await res.json();
+    pricesMap = {};
+    rows.forEach(r => { pricesMap[r.item+'|'+r.service] = parseFloat(r.price); });
+    const lres = await fetch(`${SUPABASE_URL}/rest/v1/laundries?id=eq.${laundryId}&select=urgent_surcharge`, { headers: getAuthHeaders() });
+    const ldata = await lres.json();
+    if (ldata.length && ldata[0].urgent_surcharge != null) urgentSurcharge = parseFloat(ldata[0].urgent_surcharge);
+  } catch(e){ console.log('loadPrices failed', e); }
+}
+
+function getPrice(item, service){
+  const key = item+'|'+service;
+  return pricesMap[key] != null ? pricesMap[key] : defaultPrice(item, service);
+}
+
+async function loadPricesView(){
+  await loadPrices();
+  document.getElementById('urgent-pct').value = urgentSurcharge;
+  const A = lang==='ar';
+  const allItems = LAUNDRY_GROUPS.flatMap(g => g.items);
+  let html = `<table style="width:100%;border-collapse:collapse;font-size:13px;min-width:560px;">
+    <tr style="border-bottom:1px solid #e0e0de;">
+      <th style="text-align:${A?'right':'left'};padding:6px;">${A?'القطعة':'Item'}</th>
+      ${SERVICES_LIST.map(s=>`<th style="padding:6px;">${A?SERVICE_LABELS[s].ar:SERVICE_LABELS[s].en}</th>`).join('')}
+    </tr>`;
+  allItems.forEach(it => {
+    html += `<tr style="border-bottom:0.5px solid #f0f0ee;">
+      <td style="padding:6px;font-weight:500;">${it.en} / ${it.ar}</td>
+      ${SERVICES_LIST.map(s=>`<td style="padding:4px;text-align:center;"><input type="number" min="0" step="0.5" data-item="${it.en}" data-service="${s}" class="price-input" value="${getPrice(it.en,s)}" style="width:64px;padding:4px 6px;font-size:13px;border:0.5px solid #ccc;border-radius:6px;text-align:center;"></td>`).join('')}
+    </tr>`;
+  });
+  html += '</table>';
+  document.getElementById('prices-table').innerHTML = html;
+}
+
+async function savePrices(){
+  const btn = document.getElementById('btn-save-prices');
+  btn.disabled = true; btn.textContent = '...';
+  try {
+    const laundryId = await getLaundryId();
+    if (!laundryId) throw new Error();
+    const inputs = document.querySelectorAll('.price-input');
+    const rows = Array.from(inputs).map(inp => ({
+      laundry_id: laundryId,
+      item: inp.dataset.item,
+      service: inp.dataset.service,
+      price: parseFloat(inp.value)||0
+    }));
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/prices?on_conflict=laundry_id,item,service`, {
+      method: 'POST',
+      headers: { ...getAuthHeaders(), 'Prefer': 'resolution=merge-duplicates,return=minimal' },
+      body: JSON.stringify(rows)
+    });
+    if (!res.ok) throw new Error(await res.text());
+    const pct = parseFloat(document.getElementById('urgent-pct').value)||0;
+    await fetch(`${SUPABASE_URL}/rest/v1/laundries?id=eq.${laundryId}`, {
+      method: 'PATCH', headers: { ...getAuthHeaders(), 'Prefer': 'return=minimal' },
+      body: JSON.stringify({ urgent_surcharge: pct })
+    });
+    urgentSurcharge = pct;
+    rows.forEach(r => { pricesMap[r.item+'|'+r.service] = r.price; });
+    showToast(lang==='ar'?'تم حفظ الأسعار':'Prices saved!', false);
+  } catch(e){ showToast('Failed to save prices', true); }
+  finally { btn.disabled = false; btn.textContent = lang==='ar'?'حفظ الأسعار':'Save Prices'; }
+}
+
+function calcOrderTotal(){
+  const rows = document.querySelectorAll('#items-list .item-row');
+  const service = document.getElementById('f-type').value;
+  const urgent = document.getElementById('f-priority').value === 'urgent';
+  let total = 0;
+  rows.forEach(row => {
+    const item = row.querySelector('select').value;
+    const qty = parseInt(row.querySelector('.qty-num').textContent);
+    total += getPrice(item, service) * qty;
+  });
+  if (urgent) total = total * (1 + urgentSurcharge/100);
+  document.getElementById('f-price').value = total.toFixed(1).replace(/\.0$/,'');
 }
 
 function renderReport() {
