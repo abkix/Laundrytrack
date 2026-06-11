@@ -110,6 +110,8 @@ body { background: #f5f5f4; color: #1c1c1a; }
 .qty-btn { width: 28px; height: 28px; border: 0.5px solid #ccc; border-radius: 6px; background: #f5f5f4; cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center; font-weight: 500; line-height: 1; }
 .qty-btn:hover { background: #e8f3fb; border-color: #4A9FD4; }
 .qty-num { font-size: 14px; font-weight: 500; min-width: 24px; text-align: center; }
+.item-urgent { width: 28px; height: 28px; border: 0.5px solid #ddd; border-radius: 6px; background: #f5f5f4; color: #bbb; cursor: pointer; font-size: 14px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.item-urgent.on { background: #FCEBEB; border-color: #E24B4A; color: #E24B4A; }
 .item-remove { width: 26px; height: 26px; border: none; background: transparent; color: #ccc; cursor: pointer; font-size: 18px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
 .item-remove:hover { color: #A32D2D; }
 .add-item-btn { width: 100%; padding: 7px; font-size: 12px; border: 0.5px dashed #4A9FD4; border-radius: 8px; background: transparent; color: #4A9FD4; cursor: pointer; margin-top: 4px; }
@@ -493,6 +495,7 @@ function addItemRow(selectedItem='Thoob', qty=1) {
       <span class="qty-num">${qty}</span>
       <button type="button" class="qty-btn" onclick="changeQty('${id}',1)">+</button>
     </div>
+    <button type="button" class="item-urgent" onclick="toggleItemUrgent('${id}')" title="Urgent">⚡</button>
     <button type="button" class="item-remove" onclick="removeItemRow('${id}')">✕</button>
   `;
   list.appendChild(div);
@@ -503,6 +506,12 @@ function changeQty(id, delta) {
   const row = document.getElementById(id);
   const span = row.querySelector('.qty-num');
   span.textContent = Math.max(1, parseInt(span.textContent) + delta);
+  calcOrderTotal();
+}
+
+function toggleItemUrgent(id) {
+  const btn = document.getElementById(id).querySelector('.item-urgent');
+  btn.classList.toggle('on');
   calcOrderTotal();
 }
 
@@ -518,7 +527,8 @@ function getItemsString() {
   return Array.from(rows).map(row => {
     const item = row.querySelector('select').value;
     const qty = row.querySelector('.qty-num').textContent;
-    return `${qty}x ${item}`;
+    const urgent = row.querySelector('.item-urgent').classList.contains('on');
+    return `${qty}x ${item}${urgent?' ⚡':''}`;
   }).join(', ');
 }
 
@@ -757,14 +767,16 @@ async function savePrices(){
 function calcOrderTotal(){
   const rows = document.querySelectorAll('#items-list .item-row');
   const service = document.getElementById('f-type').value;
-  const urgent = document.getElementById('f-priority').value === 'urgent';
+  const orderUrgent = document.getElementById('f-priority').value === 'urgent';
   let total = 0;
   rows.forEach(row => {
     const item = row.querySelector('select').value;
     const qty = parseInt(row.querySelector('.qty-num').textContent);
-    total += getPrice(item, service) * qty;
+    const itemUrgent = row.querySelector('.item-urgent').classList.contains('on');
+    let line = getPrice(item, service) * qty;
+    if (orderUrgent || itemUrgent) line = line * (1 + urgentSurcharge/100);
+    total += line;
   });
-  if (urgent) total = total * (1 + urgentSurcharge/100);
   document.getElementById('f-price').value = total.toFixed(1).replace(/\.0$/,'');
 }
 
