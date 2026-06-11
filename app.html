@@ -127,7 +127,7 @@ input[type=number] { -moz-appearance: textfield; appearance: textfield; }
 .del-item-btn:hover { background: #FCEBEB; color: #A32D2D; }
 .add-item-form { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 12px; padding-top: 12px; border-top: 0.5px solid #eee; }
 .add-item-form input { padding: 7px 10px; font-size: 13px; border: 0.5px solid #ccc; border-radius: 8px; }
-.print-btn { width: 34px; height: 34px; border: 0.5px solid #ddd; background: #fff; border-radius: 8px; cursor: pointer; font-size: 15px; }
+.print-btn { padding: 0 12px; height: 34px; border: 0.5px solid #ddd; background: #fff; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 500; color: #555; }
 .print-btn:hover { background: #f5f5f4; }
 .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #1A5F8A; color: #B8DDF5; font-size: 13px; padding: 10px 18px; border-radius: 8px; display: none; align-items: center; gap: 8px; z-index: 200; white-space: nowrap; }
 .toast.show { display: flex; }
@@ -594,7 +594,7 @@ function renderOrders(){
           <div class="order-meta"><span>${o.items}</span> · <span>${svcLabel}</span> · <span>${colLabel}</span> · <span>${o.order_time}</span>${o.price?` · <span style='color:#27AE60;font-weight:600;'>${o.price} QAR</span>`:''}${o.invoice_ref?` · <span style='color:#4A9FD4;font-weight:500;'>Ref: ${o.invoice_ref}</span>`:''}${o.priority==='urgent'?` <span class="urgent-badge">${lang==='ar'?'عاجل':'URGENT'}</span>`:''}</div></div>
           <div class="order-row2"><div class="status-steps">${stepsHtml}</div>
           <div class="order-actions">
-            <button class="print-btn" onclick="printReceipt(${o.id})" title="${lang==='ar'?'طباعة الإيصال':'Print receipt'}">🖨</button>
+            <button class="print-btn" onclick="printReceipt(${o.id})">${lang==='ar'?'طباعة':'Print'}</button>
             <button class="paid-btn ${o.paid?'paid':'unpaid'}" onclick="togglePaid(${o.id})">${paidLabel}</button>
             <button class="advance-btn" onclick="advanceOrder(${o.id})" ${isDone?'disabled':''}>${advLabel}</button>
           </div></div>
