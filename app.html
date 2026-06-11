@@ -168,6 +168,7 @@ body { background: #f5f5f4; color: #1c1c1a; }
   <div class="tabs">
     <button class="tab-btn active" id="tab-orders" onclick="switchTab('orders')">📋 <span id="tab-orders-lbl">Orders</span></button>
     <button class="tab-btn" id="tab-customers" onclick="switchTab('customers')">👥 <span id="tab-customers-lbl">Customers</span></button>
+    <button class="tab-btn" id="tab-reports" onclick="switchTab('reports')">📊 <span id="tab-reports-lbl">Reports</span></button>
   </div>
 
   <div class="toolbar" id="orders-toolbar">
@@ -186,6 +187,15 @@ body { background: #f5f5f4; color: #1c1c1a; }
     <input type="text" class="customer-search" id="customer-search" placeholder="Search customers..." oninput="renderCustomers()">
     <div id="customers-list"><div class="loading-state"><span class="spinner"></span> Loading customers...</div></div>
   </div>
+
+  <div class="customers-view" id="reports-view">
+    <div style="display:flex;gap:6px;margin-bottom:4px;">
+      <button class="filter-btn active" id="rep-today" onclick="setReportPeriod('today')">Today</button>
+      <button class="filter-btn" id="rep-week" onclick="setReportPeriod('week')">Last 7 Days</button>
+      <button class="filter-btn" id="rep-month" onclick="setReportPeriod('month')">Last 30 Days</button>
+    </div>
+    <div id="report-content"><div class="loading-state">Loading report...</div></div>
+  </div>
 </div>
 
 <div class="modal-backdrop" id="modal" onclick="handleBackdropClick(event)">
@@ -194,6 +204,7 @@ body { background: #f5f5f4; color: #1c1c1a; }
     <div class="form-row"><label id="lbl-name">Customer Name</label><input type="text" id="f-name" placeholder="Ahmed"></div>
     <div class="form-row"><label id="lbl-invoice">Invoice / Reference No. <span style="color:#aaa;font-weight:400;">(optional)</span></label><input type="text" id="f-invoice" placeholder="e.g. INV-2045"></div>
     <div class="form-row"><label id="lbl-phone">WhatsApp Number</label><input type="text" id="f-phone" placeholder="5xxx xxxx"></div>
+    <div class="form-row"><label id="lbl-price">Price (QAR)</label><input type="number" id="f-price" placeholder="0" min="0" step="0.5"></div>
     <div class="form-row">
       <label id="lbl-items">Items</label>
       <div id="items-list"></div>
@@ -401,6 +412,8 @@ function setLang(l) {
   document.getElementById('brand-sub').textContent=A?'إدارة المغسلة':'Laundry Management';
   document.getElementById('tab-orders-lbl').textContent=A?'الطلبات':'Orders';
   document.getElementById('tab-customers-lbl').textContent=A?'العملاء':'Customers';
+  document.getElementById('tab-reports-lbl').textContent=A?'التقارير':'Reports';
+  document.getElementById('lbl-price').textContent=A?'السعر (ريال)':'Price (QAR)';
   document.getElementById('m1').textContent=A?'إجمالي اليوم':'Total Today';
   document.getElementById('m2').textContent=A?'جارٍ':'In Progress';
   document.getElementById('m3').textContent=A?'جاهز':'Ready';
@@ -532,7 +545,7 @@ function renderOrders(){
         <div class="order-num">#${String(o.id).padStart(3,'0')}</div>
         <div class="order-body">
           <div><div class="order-name">${o.customer_name}</div>
-          <div class="order-meta"><span>${o.items}</span> · <span>${svcLabel}</span> · <span>${colLabel}</span> · <span>${o.order_time}</span>${o.invoice_ref?` · <span style='color:#4A9FD4;font-weight:500;'>Ref: ${o.invoice_ref}</span>`:''}${o.priority==='urgent'?` <span class="urgent-badge">${lang==='ar'?'عاجل':'URGENT'}</span>`:''}</div></div>
+          <div class="order-meta"><span>${o.items}</span> · <span>${svcLabel}</span> · <span>${colLabel}</span> · <span>${o.order_time}</span>${o.price?` · <span style='color:#27AE60;font-weight:600;'>${o.price} QAR</span>`:''}${o.invoice_ref?` · <span style='color:#4A9FD4;font-weight:500;'>Ref: ${o.invoice_ref}</span>`:''}${o.priority==='urgent'?` <span class="urgent-badge">${lang==='ar'?'عاجل':'URGENT'}</span>`:''}</div></div>
           <div class="order-row2"><div class="status-steps">${stepsHtml}</div>
           <div class="order-actions">
             <button class="paid-btn ${o.paid?'paid':'unpaid'}" onclick="togglePaid(${o.id})">${paidLabel}</button>
@@ -598,7 +611,7 @@ function openModal(){
 
 function closeModal(){
   document.getElementById('modal').classList.remove('open');
-  ['f-name','f-phone','f-invoice'].forEach(id=>document.getElementById(id).value='');
+  ['f-name','f-phone','f-invoice','f-price'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('items-list').innerHTML='';
 }
 
@@ -610,16 +623,62 @@ function formatPhone(p){
   return '+974'+p;
 }
 
-let customers = [], activeTab = 'orders';
+let customers = [], activeTab = 'orders', reportPeriod = 'today';
 
 function switchTab(tab) {
   activeTab = tab;
   document.getElementById('tab-orders').classList.toggle('active', tab === 'orders');
   document.getElementById('tab-customers').classList.toggle('active', tab === 'customers');
+  document.getElementById('tab-reports').classList.toggle('active', tab === 'reports');
   document.getElementById('orders-toolbar').style.display = tab === 'orders' ? 'flex' : 'none';
   document.getElementById('orders-list').style.display = tab === 'orders' ? 'flex' : 'none';
   document.getElementById('customers-view').classList.toggle('show', tab === 'customers');
+  document.getElementById('reports-view').classList.toggle('show', tab === 'reports');
   if (tab === 'customers') fetchCustomers();
+  if (tab === 'reports') renderReport();
+}
+
+function setReportPeriod(p) {
+  reportPeriod = p;
+  ['today','week','month'].forEach(k => document.getElementById('rep-'+k).classList.toggle('active', k===p));
+  renderReport();
+}
+
+function renderReport() {
+  const now = new Date();
+  let fromDate;
+  if (reportPeriod === 'today') fromDate = new Date(now.toISOString().split('T')[0]);
+  else if (reportPeriod === 'week') fromDate = new Date(Date.now() - 7*86400000);
+  else fromDate = new Date(Date.now() - 30*86400000);
+
+  const periodOrders = orders.filter(o => new Date(o.created_at) >= fromDate);
+  const totalOrders = periodOrders.length;
+  const totalRevenue = periodOrders.reduce((s,o) => s + (parseFloat(o.price)||0), 0);
+  const paidOrders = periodOrders.filter(o => o.paid);
+  const paidRevenue = paidOrders.reduce((s,o) => s + (parseFloat(o.price)||0), 0);
+  const unpaidRevenue = totalRevenue - paidRevenue;
+  const urgentCount = periodOrders.filter(o => o.priority==='urgent').length;
+  const A = lang==='ar';
+
+  // count per service type
+  const svcCounts = {};
+  periodOrders.forEach(o => { svcCounts[o.service] = (svcCounts[o.service]||0)+1; });
+  const svcRows = Object.keys(svcCounts).map(s => {
+    const label = A ? AR_SERVICE[s] : s.replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase());
+    return `<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:0.5px solid #eee;font-size:13px;"><span>${label}</span><span style="font-weight:500;">${svcCounts[s]}</span></div>`;
+  }).join('');
+
+  document.getElementById('report-content').innerHTML = `
+    <div class="metrics" style="padding:0;background:transparent;border:none;grid-template-columns:repeat(2,1fr);">
+      <div class="metric"><div class="metric-label">${A?'إجمالي الطلبات':'Total Orders'}</div><div class="metric-value">${totalOrders}</div></div>
+      <div class="metric"><div class="metric-label">${A?'إجمالي الإيرادات':'Total Revenue'}</div><div class="metric-value green">${totalRevenue.toFixed(0)} QAR</div></div>
+      <div class="metric"><div class="metric-label">${A?'المدفوع':'Paid'}</div><div class="metric-value green">${paidRevenue.toFixed(0)} QAR</div></div>
+      <div class="metric"><div class="metric-label">${A?'غير المدفوع':'Unpaid'}</div><div class="metric-value amber">${unpaidRevenue.toFixed(0)} QAR</div></div>
+    </div>
+    <div style="background:#fff;border:0.5px solid #e0e0de;border-radius:12px;padding:1rem 1.25rem;margin-top:8px;">
+      <div style="font-size:13px;font-weight:600;margin-bottom:8px;">${A?'الطلبات حسب الخدمة':'Orders by Service'}</div>
+      ${svcRows || `<div style="font-size:13px;color:#888;">${A?'لا توجد بيانات':'No data'}</div>`}
+    </div>`;
 }
 
 async function fetchCustomers() {
@@ -697,7 +756,8 @@ async function addOrder(){
   const now=new Date(),time=now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0');
   try{
     const invoice=document.getElementById('f-invoice').value.trim();
-    const saved=await saveOrder({customer_name:name,phone,items,service:document.getElementById('f-type').value,collection:document.getElementById('f-collection').value,priority:document.getElementById('f-priority').value,status_idx:0,order_time:time,invoice_ref:invoice||null});
+    const price=parseFloat(document.getElementById('f-price').value)||0;
+    const saved=await saveOrder({customer_name:name,phone,items,service:document.getElementById('f-type').value,collection:document.getElementById('f-collection').value,priority:document.getElementById('f-priority').value,status_idx:0,order_time:time,invoice_ref:invoice||null,price});
     orders.unshift(saved);closeModal();showToast('Order saved!',false);updateMetrics();renderOrders();
     await upsertCustomer(name, phone);
     const laundryName=await getLaundryName();
