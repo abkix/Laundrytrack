@@ -115,6 +115,18 @@ body { background: #f5f5f4; color: #1c1c1a; }
 .item-remove { width: 26px; height: 26px; border: none; background: transparent; color: #ccc; cursor: pointer; font-size: 18px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
 .item-remove:hover { color: #A32D2D; }
 .add-item-btn { width: 100%; padding: 7px; font-size: 12px; border: 0.5px dashed #4A9FD4; border-radius: 8px; background: transparent; color: #4A9FD4; cursor: pointer; margin-top: 4px; }
+input[type=number]::-webkit-inner-spin-button, input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+input[type=number] { -moz-appearance: textfield; appearance: textfield; }
+.prices-table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 620px; }
+.prices-table th { padding: 10px 8px; font-size: 12px; color: #888; font-weight: 500; border-bottom: 1px solid #e0e0de; }
+.prices-table td { padding: 8px; border-bottom: 0.5px solid #f0f0ee; }
+.prices-table tr:hover td { background: #fafafa; }
+.price-input { width: 70px; padding: 6px 8px; font-size: 13px; border: 0.5px solid #ddd; border-radius: 8px; text-align: center; background: #fff; }
+.price-input:focus { outline: none; border-color: #4A9FD4; background: #fff; }
+.del-item-btn { width: 26px; height: 26px; border: none; background: transparent; color: #ccc; cursor: pointer; font-size: 15px; border-radius: 6px; }
+.del-item-btn:hover { background: #FCEBEB; color: #A32D2D; }
+.add-item-form { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 12px; padding-top: 12px; border-top: 0.5px solid #eee; }
+.add-item-form input { padding: 7px 10px; font-size: 13px; border: 0.5px solid #ccc; border-radius: 8px; }
 .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #1A5F8A; color: #B8DDF5; font-size: 13px; padding: 10px 18px; border-radius: 8px; display: none; align-items: center; gap: 8px; z-index: 200; white-space: nowrap; }
 .toast.show { display: flex; }
 .toast.error { background: #791F1F; color: #F7C1C1; }
@@ -478,7 +490,7 @@ function updatePipelinePreview(){
 function addItemRow(selectedItem='Thoob', qty=1) {
   const list = document.getElementById('items-list');
   const id = 'item-' + Date.now() + Math.random().toString(36).slice(2);
-  const optgroups = LAUNDRY_GROUPS.map(g => {
+  const optgroups = getVisibleGroups().map(g => {
     const groupLabel = lang==='ar' ? g.labelAr : g.label;
     const options = g.items.map(i =>
       `<option value="${i.en}" ${i.en===selectedItem?'selected':''}>${i.en} / ${i.ar}</option>`
@@ -685,6 +697,8 @@ const SERVICE_LABELS = { wash_iron:{en:'Wash & Iron',ar:'غسيل وكوي'}, wa
 const DEFAULT_BASE = { 'Thoob':10,'Qotraa':6,'Abaya':12,'Shirt':6,'T-Shirt':6,'Pants':8,'Shorts':5,'Jacket':15,'Suit':25,'Dress':15,'Skirt':12,'Socks':2,'Hat':4,'Cap':4,'Tie':5,'Scarf':6,'Belt':4,'Bedsheet':10,'Blanket':20,'Curtain':25,'Pillow Cover':5,'Carpet':30 };
 let pricesMap = {};
 let urgentSurcharge = 50;
+let customItems = [];   // [{en, ar}]
+let hiddenItems = [];   // ['Socks', ...]
 
 function defaultPrice(item, service){
   const base = DEFAULT_BASE[item] || 5;
@@ -702,10 +716,33 @@ async function loadPrices(){
     const rows = await res.json();
     pricesMap = {};
     rows.forEach(r => { pricesMap[r.item+'|'+r.service] = parseFloat(r.price); });
-    const lres = await fetch(`${SUPABASE_URL}/rest/v1/laundries?id=eq.${laundryId}&select=urgent_surcharge`, { headers: getAuthHeaders() });
+    const lres = await fetch(`${SUPABASE_URL}/rest/v1/laundries?id=eq.${laundryId}&select=urgent_surcharge,hidden_items`, { headers: getAuthHeaders() });
     const ldata = await lres.json();
     if (ldata.length && ldata[0].urgent_surcharge != null) urgentSurcharge = parseFloat(ldata[0].urgent_surcharge);
+    if (ldata.length && Array.isArray(ldata[0].hidden_items)) hiddenItems = ldata[0].hidden_items;
+    const cres = await fetch(`${SUPABASE_URL}/rest/v1/custom_items?laundry_id=eq.${laundryId}`, { headers: getAuthHeaders() });
+    const cdata = await cres.json();
+    customItems = cdata.map(c => ({ en: c.name_en, ar: c.name_ar || c.name_en, custom: true, id: c.id, catEn: c.category_en || 'Other', catAr: c.category_ar || 'أخرى' }));
   } catch(e){ console.log('loadPrices failed', e); }
+}
+
+function plainLabel(l){ return l.replace(/[^\w\s\u0600-\u06FF]/g,'').trim().toLowerCase(); }
+
+function getVisibleGroups(){
+  const groups = LAUNDRY_GROUPS.map(g => ({
+    label: g.label, labelAr: g.labelAr,
+    items: g.items.filter(i => !hiddenItems.includes(i.en)).slice()
+  }));
+  customItems.forEach(ci => {
+    const target = groups.find(g => plainLabel(g.label) === plainLabel(ci.catEn) || plainLabel(g.labelAr) === plainLabel(ci.catAr));
+    if (target) target.items.push(ci);
+    else groups.push({ label: ci.catEn, labelAr: ci.catAr, items: [ci] });
+  });
+  return groups.filter(g => g.items.length);
+}
+
+function getAllVisibleItems(){
+  return getVisibleGroups().flatMap(g => g.items);
 }
 
 function getPrice(item, service){
@@ -717,20 +754,81 @@ async function loadPricesView(){
   await loadPrices();
   document.getElementById('urgent-pct').value = urgentSurcharge;
   const A = lang==='ar';
-  const allItems = LAUNDRY_GROUPS.flatMap(g => g.items);
-  let html = `<table style="width:100%;border-collapse:collapse;font-size:13px;min-width:560px;">
-    <tr style="border-bottom:1px solid #e0e0de;">
-      <th style="text-align:${A?'right':'left'};padding:6px;">${A?'القطعة':'Item'}</th>
-      ${SERVICES_LIST.map(s=>`<th style="padding:6px;">${A?SERVICE_LABELS[s].ar:SERVICE_LABELS[s].en}</th>`).join('')}
+  const allItems = getAllVisibleItems();
+  let html = `<table class="prices-table">
+    <tr>
+      <th style="text-align:${A?'right':'left'};">${A?'القطعة':'Item'}</th>
+      ${SERVICES_LIST.map(s=>`<th>${A?SERVICE_LABELS[s].ar:SERVICE_LABELS[s].en}</th>`).join('')}
+      <th></th>
     </tr>`;
   allItems.forEach(it => {
-    html += `<tr style="border-bottom:0.5px solid #f0f0ee;">
-      <td style="padding:6px;font-weight:500;">${it.en} / ${it.ar}</td>
-      ${SERVICES_LIST.map(s=>`<td style="padding:4px;text-align:center;"><input type="number" min="0" step="0.5" data-item="${it.en}" data-service="${s}" class="price-input" value="${getPrice(it.en,s)}" style="width:64px;padding:4px 6px;font-size:13px;border:0.5px solid #ccc;border-radius:6px;text-align:center;"></td>`).join('')}
+    html += `<tr>
+      <td style="font-weight:500;">${it.en} / ${it.ar}</td>
+      ${SERVICES_LIST.map(s=>`<td style="text-align:center;"><input type="number" min="0" step="0.5" data-item="${it.en}" data-service="${s}" class="price-input" value="${getPrice(it.en,s)}"></td>`).join('')}
+      <td style="text-align:center;"><button class="del-item-btn" onclick="deleteItem('${it.en.replace(/'/g,"\\'")}', ${it.custom?'true':'false'}, '${it.id||''}')" title="${A?'حذف':'Delete'}">🗑</button></td>
     </tr>`;
   });
   html += '</table>';
+  const catOptions = getVisibleGroups().map(g => `<option value="${g.label}|${g.labelAr}">${A?g.labelAr:g.label}</option>`).join('');
+  html += `<div class="add-item-form">
+    <span style="font-size:13px;font-weight:600;" id="add-item-title">${A?'إضافة قطعة جديدة:':'Add new item:'}</span>
+    <input type="text" id="new-item-en" placeholder="${A?'الاسم بالإنجليزي':'Name (English)'}" style="width:130px;">
+    <input type="text" id="new-item-ar" placeholder="${A?'الاسم بالعربي':'Name (Arabic)'}" style="width:130px;">
+    <select id="new-item-cat" onchange="document.getElementById('new-cat-wrap').style.display=this.value==='__new__'?'flex':'none'" style="padding:7px 10px;font-size:13px;border:0.5px solid #ccc;border-radius:8px;">
+      ${catOptions}
+      <option value="__new__">${A?'➕ فئة جديدة...':'➕ New category...'}</option>
+    </select>
+    <span id="new-cat-wrap" style="display:none;gap:6px;">
+      <input type="text" id="new-cat-en" placeholder="${A?'الفئة بالإنجليزي':'Category (EN)'}" style="width:120px;">
+      <input type="text" id="new-cat-ar" placeholder="${A?'الفئة بالعربي':'Category (AR)'}" style="width:120px;">
+    </span>
+    <button class="btn-submit" onclick="addCustomItem()">${A?'+ إضافة':'+ Add'}</button>
+  </div>`;
   document.getElementById('prices-table').innerHTML = html;
+}
+
+async function addCustomItem(){
+  const en = document.getElementById('new-item-en').value.trim();
+  const ar = document.getElementById('new-item-ar').value.trim() || en;
+  if (!en) { showToast(lang==='ar'?'أدخل اسم القطعة':'Enter item name', true); return; }
+  let catEn, catAr;
+  const catVal = document.getElementById('new-item-cat').value;
+  if (catVal === '__new__') {
+    catEn = document.getElementById('new-cat-en').value.trim();
+    catAr = document.getElementById('new-cat-ar').value.trim() || catEn;
+    if (!catEn) { showToast(lang==='ar'?'أدخل اسم الفئة':'Enter category name', true); return; }
+  } else {
+    [catEn, catAr] = catVal.split('|');
+  }
+  try {
+    const laundryId = await getLaundryId();
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/custom_items`, {
+      method: 'POST', headers: { ...getAuthHeaders(), 'Prefer': 'return=representation' },
+      body: JSON.stringify({ laundry_id: laundryId, name_en: en, name_ar: ar, category_en: catEn, category_ar: catAr })
+    });
+    if (!res.ok) throw new Error();
+    showToast(lang==='ar'?'تمت الإضافة':'Item added!', false);
+    loadPricesView();
+  } catch { showToast(lang==='ar'?'فشلت الإضافة — ربما الاسم مكرر':'Failed — name may already exist', true); }
+}
+
+async function deleteItem(itemEn, isCustom, customId){
+  const A = lang==='ar';
+  if (!confirm(A?`حذف "${itemEn}"؟`:`Delete "${itemEn}"?`)) return;
+  try {
+    const laundryId = await getLaundryId();
+    if (isCustom) {
+      await fetch(`${SUPABASE_URL}/rest/v1/custom_items?id=eq.${customId}`, { method: 'DELETE', headers: getAuthHeaders() });
+    } else {
+      hiddenItems.push(itemEn);
+      await fetch(`${SUPABASE_URL}/rest/v1/laundries?id=eq.${laundryId}`, {
+        method: 'PATCH', headers: { ...getAuthHeaders(), 'Prefer': 'return=minimal' },
+        body: JSON.stringify({ hidden_items: hiddenItems })
+      });
+    }
+    showToast(A?'تم الحذف':'Item deleted', false);
+    loadPricesView();
+  } catch { showToast('Failed to delete', true); }
 }
 
 async function savePrices(){
