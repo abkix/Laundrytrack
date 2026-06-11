@@ -770,7 +770,7 @@ async function loadPricesView(){
   });
   html += '</table>';
   const catOptions = getVisibleGroups().map(g => `<option value="${g.label}|${g.labelAr}">${A?g.labelAr:g.label}</option>`).join('');
-  html += `<div class="add-item-form">
+  const addForm = `<div class="add-item-form" style="margin-top:0;margin-bottom:12px;padding-top:0;padding-bottom:12px;border-top:none;border-bottom:0.5px solid #eee;">
     <span style="font-size:13px;font-weight:600;" id="add-item-title">${A?'إضافة قطعة جديدة:':'Add new item:'}</span>
     <input type="text" id="new-item-en" placeholder="${A?'الاسم بالإنجليزي':'Name (English)'}" style="width:130px;">
     <input type="text" id="new-item-ar" placeholder="${A?'الاسم بالعربي':'Name (Arabic)'}" style="width:130px;">
@@ -784,7 +784,7 @@ async function loadPricesView(){
     </span>
     <button class="btn-submit" onclick="addCustomItem()">${A?'+ إضافة':'+ Add'}</button>
   </div>`;
-  document.getElementById('prices-table').innerHTML = html;
+  document.getElementById('prices-table').innerHTML = addForm + html;
 }
 
 async function addCustomItem(){
@@ -814,7 +814,7 @@ async function addCustomItem(){
 
 async function deleteItem(itemEn, isCustom, customId){
   const A = lang==='ar';
-  if (!confirm(A?`حذف "${itemEn}"؟`:`Delete "${itemEn}"?`)) return;
+  if (!confirm(A?`⚠️ تحذير: هل أنت متأكد من حذف "${itemEn}"؟\n\nسيتم إزالة هذه القطعة من قائمة الطلبات الجديدة. لا يمكن التراجع عن هذا الإجراء.`:`⚠️ Warning: Are you sure you want to delete "${itemEn}"?\n\nThis item will be removed from the new order list. This action cannot be undone.`)) return;
   try {
     const laundryId = await getLaundryId();
     if (isCustom) {
