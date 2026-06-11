@@ -127,6 +127,8 @@ input[type=number] { -moz-appearance: textfield; appearance: textfield; }
 .del-item-btn:hover { background: #FCEBEB; color: #A32D2D; }
 .add-item-form { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 12px; padding-top: 12px; border-top: 0.5px solid #eee; }
 .add-item-form input { padding: 7px 10px; font-size: 13px; border: 0.5px solid #ccc; border-radius: 8px; }
+.print-btn { width: 34px; height: 34px; border: 0.5px solid #ddd; background: #fff; border-radius: 8px; cursor: pointer; font-size: 15px; }
+.print-btn:hover { background: #f5f5f4; }
 .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #1A5F8A; color: #B8DDF5; font-size: 13px; padding: 10px 18px; border-radius: 8px; display: none; align-items: center; gap: 8px; z-index: 200; white-space: nowrap; }
 .toast.show { display: flex; }
 .toast.error { background: #791F1F; color: #F7C1C1; }
@@ -592,6 +594,7 @@ function renderOrders(){
           <div class="order-meta"><span>${o.items}</span> · <span>${svcLabel}</span> · <span>${colLabel}</span> · <span>${o.order_time}</span>${o.price?` · <span style='color:#27AE60;font-weight:600;'>${o.price} QAR</span>`:''}${o.invoice_ref?` · <span style='color:#4A9FD4;font-weight:500;'>Ref: ${o.invoice_ref}</span>`:''}${o.priority==='urgent'?` <span class="urgent-badge">${lang==='ar'?'عاجل':'URGENT'}</span>`:''}</div></div>
           <div class="order-row2"><div class="status-steps">${stepsHtml}</div>
           <div class="order-actions">
+            <button class="print-btn" onclick="printReceipt(${o.id})" title="${lang==='ar'?'طباعة الإيصال':'Print receipt'}">🖨</button>
             <button class="paid-btn ${o.paid?'paid':'unpaid'}" onclick="togglePaid(${o.id})">${paidLabel}</button>
             <button class="advance-btn" onclick="advanceOrder(${o.id})" ${isDone?'disabled':''}>${advLabel}</button>
           </div></div>
@@ -600,6 +603,57 @@ function renderOrders(){
   });
 
   list.innerHTML = html;
+}
+
+async function printReceipt(id){
+  const o = orders.find(x=>x.id===id); if(!o) return;
+  const laundryName = await getLaundryName();
+  const A = lang==='ar';
+  const date = o.created_at ? new Date(o.created_at) : new Date();
+  const dateStr = date.toLocaleDateString('en-GB') + ' ' + (o.order_time||'');
+  const itemLines = (o.items||'').split(',').map(s=>s.trim()).filter(Boolean)
+    .map(it=>`<tr><td>${it}</td></tr>`).join('');
+  const paidStr = o.paid ? (A?'مدفوع ✓':'PAID ✓') : (A?'غير مدفوع':'UNPAID');
+  const svcLabel = A?AR_SERVICE[o.service]:(o.service||'').replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase());
+  const html = `<!DOCTYPE html><html dir="${A?'rtl':'ltr'}"><head><meta charset="utf-8"><title>Receipt #${o.id}</title>
+  <style>
+    @page { size: 80mm auto; margin: 4mm; }
+    body { font-family: 'Courier New', monospace; width: 72mm; margin: 0 auto; font-size: 12px; color: #000; }
+    .center { text-align: center; }
+    .big { font-size: 16px; font-weight: bold; }
+    .line { border-top: 1px dashed #000; margin: 6px 0; }
+    table { width: 100%; border-collapse: collapse; }
+    td { padding: 2px 0; }
+    .right { text-align: ${A?'left':'right'}; }
+    .total { font-size: 14px; font-weight: bold; }
+    .paid-badge { border: 2px solid #000; display: inline-block; padding: 2px 12px; font-weight: bold; margin-top: 4px; }
+  </style></head><body>
+  <div class="center big">${laundryName}</div>
+  <div class="center">${A?'إيصال طلب':'Order Receipt'}</div>
+  <div class="line"></div>
+  <table>
+    <tr><td>${A?'رقم الطلب':'Order'}</td><td class="right">#${String(o.id).padStart(3,'0')}</td></tr>
+    ${o.invoice_ref?`<tr><td>${A?'مرجع':'Ref'}</td><td class="right">${o.invoice_ref}</td></tr>`:''}
+    <tr><td>${A?'التاريخ':'Date'}</td><td class="right">${dateStr}</td></tr>
+    <tr><td>${A?'العميل':'Customer'}</td><td class="right">${o.customer_name}</td></tr>
+    <tr><td>${A?'الهاتف':'Phone'}</td><td class="right">${o.phone||''}</td></tr>
+    <tr><td>${A?'الخدمة':'Service'}</td><td class="right">${svcLabel}</td></tr>
+  </table>
+  <div class="line"></div>
+  <div>${A?'القطع:':'Items:'}</div>
+  <table>${itemLines}</table>
+  <div class="line"></div>
+  <table><tr class="total"><td>${A?'الإجمالي':'TOTAL'}</td><td class="right">${o.price||0} QAR</td></tr></table>
+  <div class="center"><span class="paid-badge">${paidStr}</span></div>
+  <div class="line"></div>
+  <div class="center">${A?'شكراً لتعاملكم معنا':'Thank you for your business!'}</div>
+  <div class="center" style="font-size:10px;margin-top:4px;">Powered by Washly</div>
+  <script>window.onload=function(){window.print();}<\/script>
+  </body></html>`;
+  const w = window.open('', '_blank', 'width=320,height=600');
+  if (!w) { showToast(A?'اسمح بالنوافذ المنبثقة للطباعة':'Allow popups to print', true); return; }
+  w.document.write(html);
+  w.document.close();
 }
 
 async function togglePaid(id){
