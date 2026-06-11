@@ -814,7 +814,7 @@ async function addCustomItem(){
 
 async function deleteItem(itemEn, isCustom, customId){
   const A = lang==='ar';
-  if (!confirm(A?`⚠️ تحذير: هل أنت متأكد من حذف "${itemEn}"؟\n\nسيتم إزالة هذه القطعة من قائمة الطلبات الجديدة. لا يمكن التراجع عن هذا الإجراء.`:`⚠️ Warning: Are you sure you want to delete "${itemEn}"?\n\nThis item will be removed from the new order list. This action cannot be undone.`)) return;
+  if (!confirm(A?`⚠️ تحذير: هل أنت متأكد من حذف "${itemEn}"؟\n\nسيتم إزالة هذه القطعة من قائمة القطع. لا يمكن التراجع عن هذا الإجراء.`:`⚠️ Warning: Are you sure you want to delete "${itemEn}"?\n\nThis item will be removed from the item list. This action cannot be undone.`)) return;
   try {
     const laundryId = await getLaundryId();
     if (isCustom) {
