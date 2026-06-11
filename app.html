@@ -648,6 +648,7 @@ function handleBackdropClick(e){ if(e.target===document.getElementById('modal'))
 
 function openModal(){
   document.getElementById('modal').classList.add('open');
+  initPhoneLookup();
   document.getElementById('items-list').innerHTML='';
   addItemRow('Thoob',1);
   updatePipelinePreview();
@@ -785,6 +786,35 @@ async function loadPricesView(){
     <button class="btn-submit" onclick="addCustomItem()">${A?'+ إضافة':'+ Add'}</button>
   </div>`;
   document.getElementById('prices-table').innerHTML = addForm + html;
+}
+
+let phoneLookupInit = false;
+function initPhoneLookup(){
+  if (phoneLookupInit) return;
+  phoneLookupInit = true;
+  const phoneEl = document.getElementById('f-phone');
+  let lookupTimer = null;
+  phoneEl.addEventListener('input', () => {
+    clearTimeout(lookupTimer);
+    lookupTimer = setTimeout(lookupCustomerByPhone, 400);
+  });
+}
+
+async function lookupCustomerByPhone(){
+  const raw = document.getElementById('f-phone').value.trim().replace(/\s+/g,'');
+  if (raw.length < 8) return;
+  const nameEl = document.getElementById('f-name');
+  try {
+    const laundryId = await getLaundryId();
+    const phone = raw.startsWith('+974') ? raw : (raw.startsWith('974') ? '+'+raw : '+974'+raw);
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/customers?laundry_id=eq.${laundryId}&phone=eq.${encodeURIComponent(phone)}&select=name`, { headers: getAuthHeaders() });
+    const data = await res.json();
+    if (data.length && data[0].name && !nameEl.value.trim()) {
+      nameEl.value = data[0].name;
+      nameEl.style.background = '#EAF7EF';
+      setTimeout(()=>{ nameEl.style.background=''; }, 1500);
+    }
+  } catch(e){ console.log('lookup failed', e); }
 }
 
 async function addCustomItem(){
