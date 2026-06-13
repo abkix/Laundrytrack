@@ -43,6 +43,7 @@ body { background: #f5f5f4; color: #1c1c1a; }
 .metric-value.green { color: #4A9FD4; }
 .metric-value.amber { color: #BA7517; }
 .metric-value.blue { color: #185FA5; }
+.metric-value.red { color: #A32D2D; }
 .toolbar { display: flex; justify-content: space-between; align-items: center; padding: 0.75rem 1.25rem; gap: 10px; flex-wrap: wrap; background: #fff; border-bottom: 0.5px solid #e0e0de; }
 .search-wrap { flex: 1; min-width: 160px; }
 .search-wrap input { width: 100%; padding: 7px 12px; font-size: 14px; border: 0.5px solid #ccc; border-radius: 8px; background: #f5f5f4; }
@@ -50,8 +51,8 @@ body { background: #f5f5f4; color: #1c1c1a; }
 .filter-btn { padding: 5px 11px; font-size: 12px; border: 0.5px solid #ddd; border-radius: 20px; background: transparent; cursor: pointer; white-space: nowrap; color: #555; }
 .filter-btn.active { background: #4A9FD4; color: #fff; border-color: #4A9FD4; }
 .new-order-btn { display: flex; align-items: center; gap: 6px; padding: 7px 14px; font-size: 13px; font-weight: 500; background: #4A9FD4; color: #fff; border: none; border-radius: 8px; cursor: pointer; white-space: nowrap; }
-.tabs { display: flex; background: #fff; border-bottom: 0.5px solid #e0e0de; padding: 0 1.25rem; }
-.tab-btn { padding: 10px 16px; font-size: 13px; font-weight: 500; border: none; background: transparent; color: #888; cursor: pointer; border-bottom: 2.5px solid transparent; margin-bottom: -0.5px; }
+.tabs { display: flex; background: #fff; border-bottom: 0.5px solid #e0e0de; padding: 0 1.25rem; overflow-x: auto; }
+.tab-btn { padding: 10px 16px; font-size: 13px; font-weight: 500; border: none; background: transparent; color: #888; cursor: pointer; border-bottom: 2.5px solid transparent; margin-bottom: -0.5px; white-space: nowrap; }
 .tab-btn.active { color: #4A9FD4; border-bottom-color: #4A9FD4; }
 .customers-view { padding: 1rem 1.25rem; display: flex; flex-direction: column; gap: 8px; display: none; }
 .customers-view.show { display: flex; }
@@ -129,6 +130,12 @@ input[type=number] { -moz-appearance: textfield; appearance: textfield; }
 .add-item-form input { padding: 7px 10px; font-size: 13px; border: 0.5px solid #ccc; border-radius: 8px; }
 .print-btn { padding: 0 12px; height: 34px; border: 0.5px solid #ddd; background: #fff; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 500; color: #555; }
 .print-btn:hover { background: #f5f5f4; }
+.expense-card { background: #fff; border: 0.5px solid #e0e0de; border-radius: 12px; padding: 0.875rem 1.25rem; display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.expense-cat { font-size: 14px; font-weight: 500; }
+.expense-note { font-size: 12px; color: #888; margin-top: 3px; }
+.expense-amount { font-size: 17px; font-weight: 500; color: #A32D2D; white-space: nowrap; }
+.expense-del { width: 26px; height: 26px; border: none; background: transparent; color: #ccc; cursor: pointer; font-size: 15px; border-radius: 6px; flex-shrink: 0; }
+.expense-del:hover { background: #FCEBEB; color: #A32D2D; }
 .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #1A5F8A; color: #B8DDF5; font-size: 13px; padding: 10px 18px; border-radius: 8px; display: none; align-items: center; gap: 8px; z-index: 200; white-space: nowrap; }
 .toast.show { display: flex; }
 .toast.error { background: #791F1F; color: #F7C1C1; }
@@ -185,6 +192,7 @@ input[type=number] { -moz-appearance: textfield; appearance: textfield; }
     <button class="tab-btn active" id="tab-orders" onclick="switchTab('orders')">📋 <span id="tab-orders-lbl">Orders</span></button>
     <button class="tab-btn" id="tab-customers" onclick="switchTab('customers')">👥 <span id="tab-customers-lbl">Customers</span></button>
     <button class="tab-btn" id="tab-reports" onclick="switchTab('reports')">📊 <span id="tab-reports-lbl">Reports</span></button>
+    <button class="tab-btn" id="tab-expenses" onclick="switchTab('expenses')">💸 <span id="tab-expenses-lbl">Expenses</span></button>
     <button class="tab-btn" id="tab-prices" onclick="switchTab('prices')">⚙️ <span id="tab-prices-lbl">Prices</span></button>
   </div>
 
@@ -212,6 +220,19 @@ input[type=number] { -moz-appearance: textfield; appearance: textfield; }
       <button class="filter-btn" id="rep-month" onclick="setReportPeriod('month')">Last 30 Days</button>
     </div>
     <div id="report-content"><div class="loading-state">Loading report...</div></div>
+  </div>
+
+  <div class="customers-view" id="expenses-view">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px;">
+      <div style="display:flex;gap:6px;">
+        <button class="filter-btn active" id="exp-today" onclick="setExpensePeriod('today')">Today</button>
+        <button class="filter-btn" id="exp-week" onclick="setExpensePeriod('week')">Last 7 Days</button>
+        <button class="filter-btn" id="exp-month" onclick="setExpensePeriod('month')">Last 30 Days</button>
+      </div>
+      <button class="new-order-btn" onclick="openExpenseModal()">+ <span id="btn-new-exp">New Expense</span></button>
+    </div>
+    <div class="metric" style="background:#FCEBEB;"><div class="metric-label" id="exp-total-lbl">Total Expenses</div><div class="metric-value red" id="exp-total-v">—</div></div>
+    <div id="expenses-list"><div class="loading-state"><span class="spinner"></span> Loading expenses...</div></div>
   </div>
 
   <div class="customers-view" id="prices-view">
@@ -275,6 +296,31 @@ input[type=number] { -moz-appearance: textfield; appearance: textfield; }
   </div>
 </div>
 
+<div class="modal-backdrop" id="expense-modal" onclick="handleExpenseBackdropClick(event)">
+  <div class="modal">
+    <h3 id="exp-modal-title">New Expense</h3>
+    <div class="form-row"><label id="lbl-exp-amount">Amount (QAR)</label><input type="number" id="e-amount" placeholder="0" min="0" step="0.5"></div>
+    <div class="form-row">
+      <label id="lbl-exp-cat">Category</label>
+      <select id="e-category">
+        <option value="Rent">Rent</option>
+        <option value="Salaries">Salaries</option>
+        <option value="Utilities">Utilities</option>
+        <option value="Supplies">Supplies</option>
+        <option value="Equipment">Equipment</option>
+        <option value="Maintenance">Maintenance</option>
+        <option value="Other">Other</option>
+      </select>
+    </div>
+    <div class="form-row"><label id="lbl-exp-date">Date</label><input type="date" id="e-date"></div>
+    <div class="form-row"><label id="lbl-exp-note">Note <span style="color:#aaa;font-weight:400;">(optional)</span></label><input type="text" id="e-note" placeholder="e.g. detergent restock"></div>
+    <div class="form-actions">
+      <button class="btn-cancel" onclick="closeExpenseModal()" id="btn-exp-cancel">Cancel</button>
+      <button class="btn-submit" onclick="addExpense()" id="btn-exp-submit">Add Expense</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"><span id="toast-msg">Done!</span></div>
 
 <script>
@@ -288,6 +334,9 @@ const AR_STATUS = { 'Received':'استُلم','Washing':'غسيل','Ironing':'ك
 const AR_SERVICE = { wash_iron:'غسيل وكوي', wash_only:'غسيل فقط', iron_only:'كوي فقط', dry_clean:'تنظيف جاف' };
 const AR_COLLECTION = { collect:'استلام من المحل', delivery:'توصيل للعميل' };
 const ALL_STATUSES_EN = ['Received','Washing','Ironing','Dry Cleaning','Ready','Collected','Delivered'];
+
+const EXPENSE_CATEGORIES = ['Rent','Salaries','Utilities','Supplies','Equipment','Maintenance','Other'];
+const AR_EXPENSE_CAT = { Rent:'إيجار', Salaries:'رواتب', Utilities:'فواتير', Supplies:'مستلزمات', Equipment:'معدات', Maintenance:'صيانة', Other:'أخرى' };
 
 const LAUNDRY_GROUPS = [
   {
@@ -372,7 +421,7 @@ function doLogout() {
 function showApp() {
   document.getElementById('login-screen').style.display = 'none';
   document.getElementById('app-screen').classList.add('show');
-  buildFilterBtns(); updatePipelinePreview(); fetchOrders(); loadPrices();
+  buildFilterBtns(); updatePipelinePreview(); fetchOrders(); loadPrices(); fetchExpenses();
 }
 
 async function checkSession() {
@@ -444,6 +493,7 @@ function setLang(l) {
   document.getElementById('tab-orders-lbl').textContent=A?'الطلبات':'Orders';
   document.getElementById('tab-customers-lbl').textContent=A?'العملاء':'Customers';
   document.getElementById('tab-reports-lbl').textContent=A?'التقارير':'Reports';
+  document.getElementById('tab-expenses-lbl').textContent=A?'المصروفات':'Expenses';
   document.getElementById('tab-prices-lbl').textContent=A?'الأسعار':'Prices';
   document.getElementById('prices-title').textContent=A?'إعدادات الأسعار':'Price Settings';
   document.getElementById('lbl-urgent-pct').textContent=A?'رسوم الاستعجال %':'Urgent surcharge %';
@@ -454,7 +504,15 @@ function setLang(l) {
   document.getElementById('m3').textContent=A?'جاهز':'Ready';
   document.getElementById('m4').textContent=A?'غير مدفوع':'Unpaid';
   document.getElementById('btn-new').textContent=A?'طلب جديد':'New Order';
+  document.getElementById('btn-new-exp').textContent=A?'مصروف جديد':'New Expense';
+  document.getElementById('exp-total-lbl').textContent=A?'إجمالي المصروفات':'Total Expenses';
   document.getElementById('modal-title').textContent=A?'طلب جديد':'New Order';
+  document.getElementById('exp-modal-title').textContent=A?'مصروف جديد':'New Expense';
+  document.getElementById('lbl-exp-amount').textContent=A?'المبلغ (ريال)':'Amount (QAR)';
+  document.getElementById('lbl-exp-cat').textContent=A?'الفئة':'Category';
+  document.getElementById('lbl-exp-date').textContent=A?'التاريخ':'Date';
+  document.getElementById('btn-exp-cancel').textContent=A?'إلغاء':'Cancel';
+  document.getElementById('btn-exp-submit').textContent=A?'إضافة المصروف':'Add Expense';
   document.getElementById('lbl-name').textContent=A?'اسم العميل':'Customer Name';
   document.getElementById('lbl-phone').textContent=A?'الرقم':'Number';
   document.getElementById('lbl-items').textContent=A?'القطع':'Items';
@@ -467,10 +525,14 @@ function setLang(l) {
   document.getElementById('btn-logout').textContent=A?'خروج':'Logout';
   document.getElementById('btn-add-item').textContent=A?'+ إضافة قطعة':'+ Add Item';
   document.getElementById('search-input').placeholder=A?'ابحث بالاسم أو رقم الطلب...':'Search by name or order #...';
+  const expCat=document.getElementById('e-category');
+  EXPENSE_CATEGORIES.forEach((c,i)=>{ expCat.options[i].text = A?AR_EXPENSE_CAT[c]:c; });
   const t=document.getElementById('f-type'),c=document.getElementById('f-collection');
   if(A){t.options[0].text='غسيل وكوي';t.options[1].text='غسيل فقط';t.options[2].text='كوي فقط';t.options[3].text='تنظيف جاف';c.options[0].text='استلام من المحل';c.options[1].text='توصيل للعميل';}
   else{t.options[0].text='Wash & Iron';t.options[1].text='Wash Only';t.options[2].text='Iron Only';t.options[3].text='Dry Clean';c.options[0].text='Collect from Shop';c.options[1].text='Delivery to Customer';}
   buildFilterBtns(); updatePipelinePreview(); updateMetrics(); renderOrders();
+  if (activeTab==='expenses') renderExpenses();
+  if (activeTab==='reports') renderReport();
 }
 
 function setFilter(f){ activeFilter=f; buildFilterBtns(); renderOrders(); }
@@ -723,20 +785,24 @@ function formatPhone(p){
 }
 
 let customers = [], activeTab = 'orders', reportPeriod = 'today';
+let expenses = [], expensePeriod = 'today';
 
 function switchTab(tab) {
   activeTab = tab;
   document.getElementById('tab-orders').classList.toggle('active', tab === 'orders');
   document.getElementById('tab-customers').classList.toggle('active', tab === 'customers');
   document.getElementById('tab-reports').classList.toggle('active', tab === 'reports');
+  document.getElementById('tab-expenses').classList.toggle('active', tab === 'expenses');
   document.getElementById('tab-prices').classList.toggle('active', tab === 'prices');
   document.getElementById('orders-toolbar').style.display = tab === 'orders' ? 'flex' : 'none';
   document.getElementById('orders-list').style.display = tab === 'orders' ? 'flex' : 'none';
   document.getElementById('customers-view').classList.toggle('show', tab === 'customers');
   document.getElementById('reports-view').classList.toggle('show', tab === 'reports');
+  document.getElementById('expenses-view').classList.toggle('show', tab === 'expenses');
   document.getElementById('prices-view').classList.toggle('show', tab === 'prices');
   if (tab === 'customers') fetchCustomers();
   if (tab === 'reports') renderReport();
+  if (tab === 'expenses') renderExpenses();
   if (tab === 'prices') loadPricesView();
 }
 
@@ -744,6 +810,123 @@ function setReportPeriod(p) {
   reportPeriod = p;
   ['today','week','month'].forEach(k => document.getElementById('rep-'+k).classList.toggle('active', k===p));
   renderReport();
+}
+
+function setExpensePeriod(p) {
+  expensePeriod = p;
+  ['today','week','month'].forEach(k => document.getElementById('exp-'+k).classList.toggle('active', k===p));
+  renderExpenses();
+}
+
+// ===== EXPENSES =====
+function periodStart(period){
+  const now = new Date();
+  if (period === 'today') return new Date(now.toISOString().split('T')[0]);
+  if (period === 'week') return new Date(Date.now() - 7*86400000);
+  return new Date(Date.now() - 30*86400000);
+}
+
+async function fetchExpenses(){
+  try {
+    const laundryId = await getLaundryId();
+    if (!laundryId) return;
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/expenses?laundry_id=eq.${laundryId}&order=created_at.desc`, { headers: getAuthHeaders() });
+    if (!res.ok) throw new Error();
+    expenses = await res.json();
+    if (activeTab === 'expenses') renderExpenses();
+  } catch {
+    expenses = [];
+    if (activeTab === 'expenses') document.getElementById('expenses-list').innerHTML = '<div class="loading-state" style="color:#A32D2D">Could not load expenses.</div>';
+  }
+}
+
+function expenseDate(e){ return e.created_at ? e.created_at.split('T')[0] : new Date().toISOString().split('T')[0]; }
+
+function renderExpenses(){
+  const A = lang==='ar';
+  const from = periodStart(expensePeriod);
+  const list = document.getElementById('expenses-list');
+  const periodExp = expenses.filter(e => new Date(e.created_at) >= from);
+  const total = periodExp.reduce((s,e) => s + (parseFloat(e.amount)||0), 0);
+  document.getElementById('exp-total-v').textContent = total.toFixed(0) + ' QAR';
+  if (!periodExp.length) { list.innerHTML = `<div class="loading-state">${A?'لا توجد مصروفات':'No expenses in this period'}</div>`; return; }
+
+  const groups = {};
+  periodExp.forEach(e => { const d = expenseDate(e); (groups[d] = groups[d] || []).push(e); });
+
+  let html = '';
+  Object.keys(groups).sort((a,b)=>b.localeCompare(a)).forEach(date => {
+    const dayTotal = groups[date].reduce((s,e)=>s+(parseFloat(e.amount)||0),0);
+    html += `<div class="date-separator"><div class="date-separator-line"></div><div class="date-separator-label">${getDateLabel(date)} · ${dayTotal.toFixed(0)} QAR</div><div class="date-separator-line"></div></div>`;
+    groups[date].forEach(e => {
+      const cat = A ? (AR_EXPENSE_CAT[e.category]||e.category||'أخرى') : (e.category||'Other');
+      html += `<div class="expense-card">
+        <div>
+          <div class="expense-cat">${cat}</div>
+          ${e.note?`<div class="expense-note">${e.note}</div>`:''}
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div class="expense-amount">${(parseFloat(e.amount)||0).toFixed(0)} QAR</div>
+          <button class="expense-del" onclick="deleteExpense('${e.id}')" title="${A?'حذف':'Delete'}">🗑</button>
+        </div>
+      </div>`;
+    });
+  });
+  list.innerHTML = html;
+}
+
+function handleExpenseBackdropClick(e){ if(e.target===document.getElementById('expense-modal')) closeExpenseModal(); }
+
+function openExpenseModal(){
+  document.getElementById('expense-modal').classList.add('open');
+  document.getElementById('e-date').value = new Date().toISOString().split('T')[0];
+}
+
+function closeExpenseModal(){
+  document.getElementById('expense-modal').classList.remove('open');
+  document.getElementById('e-amount').value = '';
+  document.getElementById('e-note').value = '';
+}
+
+async function addExpense(){
+  const amount = parseFloat(document.getElementById('e-amount').value);
+  const category = document.getElementById('e-category').value;
+  const note = document.getElementById('e-note').value.trim();
+  const dateVal = document.getElementById('e-date').value;
+  const A = lang==='ar';
+  if (!amount || amount <= 0) { showToast(A?'أدخل مبلغاً صحيحاً':'Enter a valid amount', true); return; }
+  const btn = document.getElementById('btn-exp-submit'); btn.disabled = true; btn.textContent = '...';
+  try {
+    const laundryId = await getLaundryId();
+    if (!laundryId) throw new Error();
+    const createdAt = dateVal ? new Date(dateVal + 'T12:00:00').toISOString() : new Date().toISOString();
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/expenses`, {
+      method: 'POST', headers: { ...getAuthHeaders(), 'Prefer': 'return=representation' },
+      body: JSON.stringify({ laundry_id: laundryId, amount, category, note: note||null, created_at: createdAt })
+    });
+    if (!res.ok) throw new Error(await res.text());
+    const saved = (await res.json())[0];
+    expenses.unshift(saved);
+    expenses.sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));
+    closeExpenseModal();
+    showToast(A?'تم حفظ المصروف':'Expense saved!', false);
+    renderExpenses();
+    if (activeTab === 'reports') renderReport();
+  } catch(e){ showToast('Failed to save expense', true); }
+  finally { btn.disabled = false; btn.textContent = A?'إضافة المصروف':'Add Expense'; }
+}
+
+async function deleteExpense(id){
+  const A = lang==='ar';
+  if (!confirm(A?'هل تريد حذف هذا المصروف؟':'Delete this expense?')) return;
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/expenses?id=eq.${id}`, { method: 'DELETE', headers: getAuthHeaders() });
+    if (!res.ok) throw new Error();
+    expenses = expenses.filter(e => String(e.id) !== String(id));
+    showToast(A?'تم الحذف':'Expense deleted', false);
+    renderExpenses();
+    if (activeTab === 'reports') renderReport();
+  } catch { showToast('Failed to delete', true); }
 }
 
 // ===== PRICES =====
@@ -976,6 +1159,8 @@ function renderReport() {
   const paidRevenue = paidOrders.reduce((s,o) => s + (parseFloat(o.price)||0), 0);
   const unpaidRevenue = totalRevenue - paidRevenue;
   const urgentCount = periodOrders.filter(o => o.priority==='urgent').length;
+  const periodExpenses = expenses.filter(e => new Date(e.created_at) >= fromDate).reduce((s,e)=>s+(parseFloat(e.amount)||0),0);
+  const netProfit = totalRevenue - periodExpenses;
   const A = lang==='ar';
 
   // count per service type
@@ -992,6 +1177,8 @@ function renderReport() {
       <div class="metric"><div class="metric-label">${A?'إجمالي الإيرادات':'Total Revenue'}</div><div class="metric-value green">${totalRevenue.toFixed(0)} QAR</div></div>
       <div class="metric"><div class="metric-label">${A?'المدفوع':'Paid'}</div><div class="metric-value green">${paidRevenue.toFixed(0)} QAR</div></div>
       <div class="metric"><div class="metric-label">${A?'غير المدفوع':'Unpaid'}</div><div class="metric-value amber">${unpaidRevenue.toFixed(0)} QAR</div></div>
+      <div class="metric"><div class="metric-label">${A?'المصروفات':'Expenses'}</div><div class="metric-value red">${periodExpenses.toFixed(0)} QAR</div></div>
+      <div class="metric"><div class="metric-label">${A?'صافي الربح':'Net Profit'}</div><div class="metric-value ${netProfit>=0?'green':'red'}">${netProfit.toFixed(0)} QAR</div></div>
     </div>
     <div style="background:#fff;border:0.5px solid #e0e0de;border-radius:12px;padding:1rem 1.25rem;margin-top:8px;">
       <div style="font-size:13px;font-weight:600;margin-bottom:8px;">${A?'الطلبات حسب الخدمة':'Orders by Service'}</div>
