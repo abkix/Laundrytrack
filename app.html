@@ -223,16 +223,29 @@ input[type=number] { -moz-appearance: textfield; appearance: textfield; }
   </div>
 
   <div class="customers-view" id="expenses-view">
-    <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px;">
-      <div style="display:flex;gap:6px;">
-        <button class="filter-btn active" id="exp-today" onclick="setExpensePeriod('today')">Today</button>
-        <button class="filter-btn" id="exp-week" onclick="setExpensePeriod('week')">Last 7 Days</button>
-        <button class="filter-btn" id="exp-month" onclick="setExpensePeriod('month')">Last 30 Days</button>
+    <div id="expense-lock" style="display:none;">
+      <div style="background:#fff;border:0.5px solid #e0e0de;border-radius:12px;padding:1.75rem 1.5rem;max-width:340px;margin:1rem auto;text-align:center;">
+        <div style="font-size:32px;margin-bottom:8px;">🔒</div>
+        <div style="font-size:15px;font-weight:600;margin-bottom:4px;" id="exp-lock-title">Owner Access</div>
+        <div style="font-size:12px;color:#888;margin-bottom:14px;" id="exp-lock-sub">Enter your PIN to view expenses</div>
+        <input type="password" id="exp-pin-input" inputmode="numeric" maxlength="8" placeholder="••••" onkeydown="if(event.key==='Enter')submitExpensePin()" style="width:140px;text-align:center;letter-spacing:6px;font-size:18px;padding:10px;border:0.5px solid #ccc;border-radius:8px;margin-bottom:10px;">
+        <div id="exp-pin-error" style="font-size:12px;color:#A32D2D;min-height:16px;margin-bottom:8px;"></div>
+        <button class="btn-submit" id="exp-pin-btn" style="width:140px;" onclick="submitExpensePin()">Unlock</button>
       </div>
-      <button class="new-order-btn" onclick="openExpenseModal()">+ <span id="btn-new-exp">New Expense</span></button>
     </div>
-    <div class="metric" style="background:#FCEBEB;"><div class="metric-label" id="exp-total-lbl">Total Expenses</div><div class="metric-value red" id="exp-total-v">—</div></div>
-    <div id="expenses-list"><div class="loading-state"><span class="spinner"></span> Loading expenses...</div></div>
+    <div id="expense-content" style="display:none;">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px;">
+        <div style="display:flex;gap:6px;">
+          <button class="filter-btn active" id="exp-today" onclick="setExpensePeriod('today')">Today</button>
+          <button class="filter-btn" id="exp-week" onclick="setExpensePeriod('week')">Last 7 Days</button>
+          <button class="filter-btn" id="exp-month" onclick="setExpensePeriod('month')">Last 30 Days</button>
+        </div>
+        <button class="new-order-btn" onclick="openExpenseModal()">+ <span id="btn-new-exp">New Expense</span></button>
+      </div>
+      <div class="metric" style="background:#FCEBEB;"><div class="metric-label" id="exp-total-lbl">Total Expenses</div><div class="metric-value red" id="exp-total-v">—</div></div>
+      <div id="expenses-list"><div class="loading-state"><span class="spinner"></span> Loading expenses...</div></div>
+      <div style="text-align:center;margin-top:10px;"><button onclick="changeExpensePin()" style="font-size:12px;color:#888;background:none;border:none;cursor:pointer;text-decoration:underline;" id="exp-change-pin">Change PIN</button></div>
+    </div>
   </div>
 
   <div class="customers-view" id="prices-view">
@@ -802,8 +815,61 @@ function switchTab(tab) {
   document.getElementById('prices-view').classList.toggle('show', tab === 'prices');
   if (tab === 'customers') fetchCustomers();
   if (tab === 'reports') renderReport();
-  if (tab === 'expenses') renderExpenses();
+  if (tab === 'expenses') openExpensesTab();
   if (tab === 'prices') loadPricesView();
+}
+
+// ===== EXPENSE PIN GATE =====
+function expensePinKey(){ return 'washly_exp_pin_' + (currentUser ? currentUser.id : 'x'); }
+
+// Re-lock every time the tab is opened, so it's never left open for the cashier.
+function openExpensesTab(){
+  const A = lang==='ar';
+  const lock = document.getElementById('expense-lock');
+  const content = document.getElementById('expense-content');
+  const hasPin = !!localStorage.getItem(expensePinKey());
+  document.getElementById('exp-pin-error').textContent = '';
+  document.getElementById('exp-pin-input').value = '';
+  document.getElementById('exp-lock-title').textContent = hasPin ? (A?'دخول المالك':'Owner Access') : (A?'إنشاء رمز المالك':'Set Owner PIN');
+  document.getElementById('exp-lock-sub').textContent = hasPin ? (A?'أدخل الرمز لعرض المصروفات':'Enter your PIN to view expenses') : (A?'اختر رمزاً من 4 أرقام للمصروفات':'Choose a 4-digit PIN for expenses');
+  document.getElementById('exp-pin-btn').textContent = hasPin ? (A?'فتح':'Unlock') : (A?'حفظ الرمز':'Set PIN');
+  lock.style.display = 'block';
+  content.style.display = 'none';
+  setTimeout(()=>document.getElementById('exp-pin-input').focus(), 50);
+}
+
+function submitExpensePin(){
+  const A = lang==='ar';
+  const val = document.getElementById('exp-pin-input').value.trim();
+  const err = document.getElementById('exp-pin-error');
+  const stored = localStorage.getItem(expensePinKey());
+  if (!stored) {
+    if (val.length < 4) { err.textContent = A?'الرمز 4 أرقام على الأقل':'PIN must be at least 4 digits'; return; }
+    localStorage.setItem(expensePinKey(), val);
+    unlockExpenses();
+    return;
+  }
+  if (val === stored) { unlockExpenses(); }
+  else { err.textContent = A?'رمز غير صحيح':'Incorrect PIN'; document.getElementById('exp-pin-input').value=''; }
+}
+
+function unlockExpenses(){
+  document.getElementById('expense-lock').style.display = 'none';
+  document.getElementById('expense-content').style.display = 'block';
+  renderExpenses();
+}
+
+function changeExpensePin(){
+  const A = lang==='ar';
+  const stored = localStorage.getItem(expensePinKey());
+  const cur = prompt(A?'أدخل الرمز الحالي:':'Enter current PIN:');
+  if (cur === null) return;
+  if (cur !== stored) { showToast(A?'رمز غير صحيح':'Incorrect PIN', true); return; }
+  const next = prompt(A?'الرمز الجديد (4 أرقام على الأقل):':'New PIN (at least 4 digits):');
+  if (next === null) return;
+  if (next.trim().length < 4) { showToast(A?'الرمز 4 أرقام على الأقل':'PIN too short', true); return; }
+  localStorage.setItem(expensePinKey(), next.trim());
+  showToast(A?'تم تغيير الرمز':'PIN changed', false);
 }
 
 function setReportPeriod(p) {
