@@ -1225,8 +1225,6 @@ function renderReport() {
   const paidRevenue = paidOrders.reduce((s,o) => s + (parseFloat(o.price)||0), 0);
   const unpaidRevenue = totalRevenue - paidRevenue;
   const urgentCount = periodOrders.filter(o => o.priority==='urgent').length;
-  const periodExpenses = expenses.filter(e => new Date(e.created_at) >= fromDate).reduce((s,e)=>s+(parseFloat(e.amount)||0),0);
-  const netProfit = totalRevenue - periodExpenses;
   const A = lang==='ar';
 
   // count per service type
@@ -1243,8 +1241,6 @@ function renderReport() {
       <div class="metric"><div class="metric-label">${A?'إجمالي الإيرادات':'Total Revenue'}</div><div class="metric-value green">${totalRevenue.toFixed(0)} QAR</div></div>
       <div class="metric"><div class="metric-label">${A?'المدفوع':'Paid'}</div><div class="metric-value green">${paidRevenue.toFixed(0)} QAR</div></div>
       <div class="metric"><div class="metric-label">${A?'غير المدفوع':'Unpaid'}</div><div class="metric-value amber">${unpaidRevenue.toFixed(0)} QAR</div></div>
-      <div class="metric"><div class="metric-label">${A?'المصروفات':'Expenses'}</div><div class="metric-value red">${periodExpenses.toFixed(0)} QAR</div></div>
-      <div class="metric"><div class="metric-label">${A?'صافي الربح':'Net Profit'}</div><div class="metric-value ${netProfit>=0?'green':'red'}">${netProfit.toFixed(0)} QAR</div></div>
     </div>
     <div style="background:#fff;border:0.5px solid #e0e0de;border-radius:12px;padding:1rem 1.25rem;margin-top:8px;">
       <div style="font-size:13px;font-weight:600;margin-bottom:8px;">${A?'الطلبات حسب الخدمة':'Orders by Service'}</div>
