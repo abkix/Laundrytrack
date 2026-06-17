@@ -242,7 +242,11 @@ input[type=number] { -moz-appearance: textfield; appearance: textfield; }
         </div>
         <button class="new-order-btn" onclick="openExpenseModal()">+ <span id="btn-new-exp">New Expense</span></button>
       </div>
-      <div class="metric" style="background:#FCEBEB;"><div class="metric-label" id="exp-total-lbl">Total Expenses</div><div class="metric-value red" id="exp-total-v">—</div></div>
+      <div class="metrics" style="padding:0;background:transparent;border:none;grid-template-columns:repeat(3,1fr);margin-bottom:8px;">
+        <div class="metric"><div class="metric-label" id="exp-rev-lbl">Revenue</div><div class="metric-value green" id="exp-rev-v">—</div></div>
+        <div class="metric"><div class="metric-label" id="exp-total-lbl">Expenses</div><div class="metric-value red" id="exp-total-v">—</div></div>
+        <div class="metric"><div class="metric-label" id="exp-net-lbl">Net Profit</div><div class="metric-value green" id="exp-net-v">—</div></div>
+      </div>
       <div id="expenses-list"><div class="loading-state"><span class="spinner"></span> Loading expenses...</div></div>
       <div style="text-align:center;margin-top:10px;"><button onclick="changeExpensePin()" style="font-size:12px;color:#888;background:none;border:none;cursor:pointer;text-decoration:underline;" id="exp-change-pin">Change PIN</button></div>
     </div>
@@ -518,7 +522,9 @@ function setLang(l) {
   document.getElementById('m4').textContent=A?'غير مدفوع':'Unpaid';
   document.getElementById('btn-new').textContent=A?'طلب جديد':'New Order';
   document.getElementById('btn-new-exp').textContent=A?'مصروف جديد':'New Expense';
-  document.getElementById('exp-total-lbl').textContent=A?'إجمالي المصروفات':'Total Expenses';
+  document.getElementById('exp-rev-lbl').textContent=A?'الإيرادات':'Revenue';
+  document.getElementById('exp-total-lbl').textContent=A?'المصروفات':'Expenses';
+  document.getElementById('exp-net-lbl').textContent=A?'صافي الربح':'Net Profit';
   document.getElementById('modal-title').textContent=A?'طلب جديد':'New Order';
   document.getElementById('exp-modal-title').textContent=A?'مصروف جديد':'New Expense';
   document.getElementById('lbl-exp-amount').textContent=A?'المبلغ (ريال)':'Amount (QAR)';
@@ -914,7 +920,13 @@ function renderExpenses(){
   const list = document.getElementById('expenses-list');
   const periodExp = expenses.filter(e => new Date(e.created_at) >= from);
   const total = periodExp.reduce((s,e) => s + (parseFloat(e.amount)||0), 0);
+  const revenue = orders.filter(o => new Date(o.created_at) >= from).reduce((s,o)=>s+(parseFloat(o.price)||0),0);
+  const net = revenue - total;
+  document.getElementById('exp-rev-v').textContent = revenue.toFixed(0) + ' QAR';
   document.getElementById('exp-total-v').textContent = total.toFixed(0) + ' QAR';
+  const netEl = document.getElementById('exp-net-v');
+  netEl.textContent = net.toFixed(0) + ' QAR';
+  netEl.className = 'metric-value ' + (net >= 0 ? 'green' : 'red');
   if (!periodExp.length) { list.innerHTML = `<div class="loading-state">${A?'لا توجد مصروفات':'No expenses in this period'}</div>`; return; }
 
   const groups = {};
