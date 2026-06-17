@@ -105,9 +105,9 @@ function renderOrder(o) {
   const isDone = o.status_idx >= pipe.length - 1;
 
   const stepsHtml = pipe.map((s, i) => {
-    const done = i < o.status_idx;
-    const active = i === o.status_idx;
     const isLast = i === pipe.length - 1;
+    const done = i < o.status_idx || (isLast && o.status_idx >= pipe.length - 1);
+    const active = i === o.status_idx && !done;
     const icon = STEP_ICONS[s] || '•';
     return `
       <div class="step-row">
