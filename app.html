@@ -419,7 +419,7 @@ const SUPABASE_KEY = 'sb_publishable_iTZMaKFvYbZZX9kzOwB7gQ_KS9AlTBy';
 
 const SERVICE_PIPELINES = { wash_iron:['Received','Washing','Ironing','Ready'], wash_only:['Received','Washing','Ready'], iron_only:['Received','Ironing','Ready'], dry_clean:['Received','Dry Cleaning','Ready'] };
 const COLLECTION_STEP = { collect:'Collected', delivery:'Delivered' };
-const STEP_ICONS = {};
+const STEP_ICONS = { 'Received':'📥','Washing':'💧','Ironing':'♨️','Dry Cleaning':'👕','Ready':'✅','Collected':'🛍','Delivered':'🚚' };
 const AR_STATUS = { 'Received':'استُلم','Washing':'غسيل','Ironing':'كوي','Dry Cleaning':'تنظيف جاف','Ready':'جاهز','Collected':'تم الاستلام','Delivered':'تم التوصيل' };
 const AR_SERVICE = { wash_iron:'غسيل وكوي', wash_only:'غسيل فقط', iron_only:'كوي فقط', dry_clean:'تنظيف جاف' };
 const AR_COLLECTION = { collect:'استلام من المحل', delivery:'توصيل للعميل' };
@@ -735,7 +735,7 @@ function renderOrders(){
       const pipe=getPipeline(o.service,o.collection),isDone=o.status_idx>=pipe.length-1;
       const stepsHtml=pipe.map((s,i)=>{
         const isLast=i===pipe.length-1;
-        const done=i<o.status_idx||(isLast&&o.status_idx>=pipe.length-1),active=i===o.status_idx&&!done,icon=STEP_ICONS[s]||'';
+        const done=i<o.status_idx||(isLast&&o.status_idx>=pipe.length-1),active=i===o.status_idx&&!done,icon=STEP_ICONS[s]||'•';
         return `<div class="step"><div class="step-inner"><div class="step-dot${done?' done':active?' active':''}">${done?'✓':icon}</div><div class="step-label${done?' done':active?' active':''}">${statusLabel(s)}</div></div>${i<pipe.length-1?`<div class="step-connector${done?' done':''}"></div>`:''}</div>`;
       }).join('');
       const svcLabel=lang==='ar'?AR_SERVICE[o.service]:o.service.replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase());
