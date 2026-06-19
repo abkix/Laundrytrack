@@ -84,7 +84,7 @@ const SERVICE_PIPELINES = {
   dry_clean: ['Received','Dry Cleaning','Ready'],
 };
 const COLLECTION_STEP = { collect: 'Collected', delivery: 'Delivered' };
-const STEP_ICONS = {};
+const STEP_ICONS = { 'Received':'📥','Washing':'💧','Ironing':'♨️','Dry Cleaning':'👕','Ready':'✅','Collected':'🛍','Delivered':'🚚' };
 const AR_STATUS = { 'Received':'استُلم','Washing':'جاري الغسيل','Ironing':'جاري الكوي','Dry Cleaning':'جاري التنظيف الجاف','Ready':'جاهز للاستلام','Collected':'تم الاستلام','Delivered':'تم التوصيل' };
 
 function getPipeline(s, c) { return [...SERVICE_PIPELINES[s], COLLECTION_STEP[c]]; }
@@ -121,7 +121,7 @@ function renderOrder(o) {
     const isLast = i === pipe.length - 1;
     const done = i < o.status_idx || (isLast && o.status_idx >= pipe.length - 1);
     const active = i === o.status_idx && !done;
-    const icon = STEP_ICONS[s] || '';
+    const icon = STEP_ICONS[s] || '•';
     return `
       <div class="step-row">
         <div class="step-left">
@@ -147,7 +147,7 @@ function renderOrder(o) {
     <div class="laundry-name">${o.service.replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase())} · ${o.collection === 'collect' ? 'Collect from shop' : 'Delivery'}</div>
     <div class="current-status">
       <div class="current-status-label">Current Status</div>
-      <div class="current-status-value">${currentStatus}</div>
+      <div class="current-status-value">${currentStatus} ${STEP_ICONS[currentStatus]||''}</div>
       <div class="current-status-ar">${AR_STATUS[currentStatus]||''}</div>
     </div>
     <div class="progress-section">
