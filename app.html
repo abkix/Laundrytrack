@@ -430,26 +430,51 @@ const AR_EXPENSE_CAT = { Rent:'إيجار', Salaries:'رواتب', Utilities:'ف
 
 const LAUNDRY_GROUPS = [
   {
-    label: 'Clothes', labelAr: 'ملابس',
+    label: 'National Dress', labelAr: 'الزي الوطني',
     items: [
-      {en:'Thoob',ar:'ثوب'},{en:'Qotraa',ar:'غترة'},{en:'Abaya',ar:'عباءة'},
-      {en:'Shirt',ar:'قميص'},{en:'T-Shirt',ar:'تيشيرت'},{en:'Pants',ar:'بنطلون'},
-      {en:'Shorts',ar:'شورت'},{en:'Jacket',ar:'جاكيت'},{en:'Suit',ar:'بدلة'},
-      {en:'Dress',ar:'فستان'},{en:'Skirt',ar:'تنورة'},
+      {en:'Thobe',ar:'ثوب'},{en:'Color Thobe',ar:'ثوب ملون'},
+      {en:'Gutrah',ar:'غترة'},{en:'Shmagh',ar:'شماغ'},
+      {en:'Bisht',ar:'بشت'},{en:'Forwah',ar:'فروة'},{en:'Sarwal',ar:'سروال'},
     ]
   },
   {
-    label: 'Accessories', labelAr: 'إكسسوارات',
+    label: 'Clothes', labelAr: 'ملابس',
     items: [
-      {en:'Socks',ar:'جوارب'},{en:'Hat',ar:'قبعة'},{en:'Cap',ar:'كاب'},
-      {en:'Tie',ar:'ربطة عنق'},{en:'Scarf',ar:'وشاح'},{en:'Belt',ar:'حزام'},
+      {en:'Shirt',ar:'قميص'},{en:'Pant',ar:'بنطلون'},
+      {en:'T-Shirt',ar:'تي شيرت'},{en:'Pajama',ar:'بيجامة'},
+      {en:'Tie',ar:'ربطة عنق'},{en:'Cap',ar:'طاقية'},
+      {en:'Sweater',ar:'فانيلة صوف'},{en:'Blouse',ar:'بلوزة'},
+      {en:'Skirt',ar:'تنورة'},{en:'Undershirt',ar:'فانيلة داخلية'},
+      {en:'Half Short',ar:'هاف'},{en:'Socks',ar:'جوارب'},
+      {en:'Workwear',ar:'بدلة عمال'},{en:'School Uniform',ar:'مريول مدرسي'},
+    ]
+  },
+  {
+    label: 'Jackets & Suits', labelAr: 'جاكيت وبدلات',
+    items: [
+      {en:'Military Suit',ar:'بدلة عسكرية'},
+      {en:'Small Jacket',ar:'جاكيت صغير'},{en:'Medium Jacket',ar:'جاكيت وسط'},
+      {en:'Large Jacket',ar:'جاكيت كبير'},{en:'Coat',ar:'كوت'},
+      {en:'Overcoat',ar:'معطف'},{en:'Men Suit',ar:'بدلة رجالي'},
+    ]
+  },
+  {
+    label: 'Ladies', labelAr: 'نسائي',
+    items: [
+      {en:'Ladies Dress',ar:'فستان نسائي'},{en:'Pleated Dress',ar:'فستان مكسر'},
+      {en:'Special Dress',ar:'فستان خاص'},{en:'Abaya',ar:'عباية'},
+      {en:'Baby Frock',ar:'فستان أطفال'},{en:'Saree',ar:'ساري'},
+      {en:'Shawl',ar:'حجاب'},{en:'Bath Robe',ar:'روب حمام'},
     ]
   },
   {
     label: 'Home Items', labelAr: 'مفروشات',
     items: [
-      {en:'Bedsheet',ar:'ملاءة'},{en:'Blanket',ar:'بطانية'},{en:'Curtain',ar:'ستارة'},
-      {en:'Pillow Cover',ar:'كيس وسادة'},{en:'Carpet',ar:'سجادة'},
+      {en:'Single Bed Sheet',ar:'شرشف مفرد'},{en:'Double Bed Sheet',ar:'شرشف دبل'},
+      {en:'Pillow Cover',ar:'غطاء وسادة'},{en:'Single Bedspread',ar:'غطاء سرير مفرد'},
+      {en:'Double Bedspread',ar:'غطاء سرير دبل'},{en:'Small Blanket',ar:'بطانية صغيرة'},
+      {en:'Large Blanket',ar:'بطانية كبيرة'},{en:'Curtains',ar:'ستائر'},
+      {en:'Carpet',ar:'موكيت'},{en:'Towel',ar:'منشفة'},
     ]
   },
 ];
@@ -643,7 +668,7 @@ function updatePipelinePreview(){
   document.getElementById('pipeline-preview').innerHTML=pipe.map((s,i)=>`<span class="pipe-step">${statusLabel(s)}</span>${i<pipe.length-1?'<span class="pipe-arrow"> → </span>':''}`).join('');
 }
 
-function addItemRow(selectedItem='Thoob', qty=1) {
+function addItemRow(selectedItem='Thobe', qty=1) {
   const list = document.getElementById('items-list');
   const id = 'item-' + Date.now() + Math.random().toString(36).slice(2);
   const optgroups = getVisibleGroups().map(g => {
@@ -859,7 +884,7 @@ function openModal(){
   document.getElementById('modal').classList.add('open');
   initPhoneLookup();
   document.getElementById('items-list').innerHTML='';
-  addItemRow('Thoob',1);
+  addItemRow('Thobe',1);
   updatePipelinePreview();
 }
 
@@ -1084,18 +1109,39 @@ async function deleteExpense(id){
 // ===== PRICES =====
 const SERVICES_LIST = ['wash_iron','wash_only','iron_only','dry_clean'];
 const SERVICE_LABELS = { wash_iron:{en:'Wash & Iron',ar:'غسيل وكوي'}, wash_only:{en:'Wash',ar:'غسيل'}, iron_only:{en:'Iron',ar:'كوي'}, dry_clean:{en:'Dry Clean',ar:'تنظيف جاف'} };
-const DEFAULT_BASE = { 'Thoob':10,'Qotraa':6,'Abaya':12,'Shirt':6,'T-Shirt':6,'Pants':8,'Shorts':5,'Jacket':15,'Suit':25,'Dress':15,'Skirt':12,'Socks':2,'Hat':4,'Cap':4,'Tie':5,'Scarf':6,'Belt':4,'Bedsheet':10,'Blanket':20,'Curtain':25,'Pillow Cover':5,'Carpet':30 };
+
+// Per-item prices from your shop list. dc = Dry Clean, press = Iron/Press.
+// Wash & Iron / Wash Only are derived automatically from the press price.
+const ITEM_PRICES = {
+  'Thobe':{dc:5,press:3},'Color Thobe':{dc:10,press:5},'Gutrah':{dc:5,press:3},
+  'Shmagh':{dc:5,press:3},'Bisht':{dc:15,press:8},'Forwah':{dc:25,press:10},'Sarwal':{dc:3,press:2},
+  'Shirt':{dc:5,press:3},'Pant':{dc:5,press:3},'T-Shirt':{dc:5,press:3},'Pajama':{dc:5,press:3},
+  'Tie':{dc:5,press:3},'Cap':{dc:2,press:1},'Sweater':{dc:8,press:4},'Blouse':{dc:8,press:5},
+  'Skirt':{dc:8,press:4},'Undershirt':{dc:3,press:2},'Half Short':{dc:3,press:2},
+  'Socks':{dc:2,press:2},'Workwear':{dc:10,press:8},'School Uniform':{dc:10,press:7},
+  'Military Suit':{dc:15,press:8},'Small Jacket':{dc:15,press:7},'Medium Jacket':{dc:20,press:7},
+  'Large Jacket':{dc:25,press:7},'Coat':{dc:15,press:8},'Overcoat':{dc:20,press:10},'Men Suit':{dc:20,press:10},
+  'Ladies Dress':{dc:15,press:8},'Pleated Dress':{dc:20,press:10},'Special Dress':{dc:20,press:10},
+  'Abaya':{dc:15,press:8},'Baby Frock':{dc:5,press:3},'Saree':{dc:15,press:8},
+  'Shawl':{dc:5,press:4},'Bath Robe':{dc:10,press:5},
+  'Single Bed Sheet':{dc:10,press:6},'Double Bed Sheet':{dc:15,press:6},'Pillow Cover':{dc:3,press:2},
+  'Single Bedspread':{dc:8,press:7},'Double Bedspread':{dc:20,press:7},
+  'Small Blanket':{dc:20,press:12},'Large Blanket':{dc:25,press:12},
+  'Curtains':{dc:10,press:5},'Carpet':{dc:20,press:8},'Towel':{dc:5,press:2},
+};
 let pricesMap = {};
 let urgentSurcharge = 50;
 let customItems = [];   // [{en, ar}]
 let hiddenItems = [];   // ['Socks', ...]
 
 function defaultPrice(item, service){
-  const base = DEFAULT_BASE[item] || 5;
-  if (service==='wash_iron') return base;
-  if (service==='wash_only') return Math.round(base*0.7);
-  if (service==='iron_only') return Math.round(base*0.5);
-  return Math.round(base*1.8);
+  const p = ITEM_PRICES[item] || {dc:8, press:4};
+  const press = p.press || Math.round(p.dc * 0.4);
+  if (service === 'dry_clean') return p.dc;
+  if (service === 'iron_only') return press;
+  if (service === 'wash_iron') return Math.round(press * 1.6);
+  if (service === 'wash_only') return Math.round(press * 1.2);
+  return press;
 }
 
 async function loadPrices(){
