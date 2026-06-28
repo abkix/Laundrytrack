@@ -758,9 +758,8 @@ function renderOrders(){
     groups[date].forEach(o => {
       const pipe=getPipeline(o.service,o.collection),isDone=o.status_idx>=pipe.length-1;
       const stepsHtml=pipe.map((s,i)=>{
-        const done = i < o.status_idx;
-        const active = i === o.status_idx;
-        const icon = STEP_ICONS[s] || '•';
+        const isLast=i===pipe.length-1;
+        const done=i<o.status_idx||(isLast&&o.status_idx>=pipe.length-1),active=i===o.status_idx&&!done,icon=STEP_ICONS[s]||'•';
         return `<div class="step"><div class="step-inner"><div class="step-dot${done?' done':active?' active':''}">${done?'✓':icon}</div><div class="step-label${done?' done':active?' active':''}">${statusLabel(s)}</div></div>${i<pipe.length-1?`<div class="step-connector${done?' done':''}"></div>`:''}</div>`;
       }).join('');
       const svcLabel=lang==='ar'?AR_SERVICE[o.service]:o.service.replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase());
