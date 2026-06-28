@@ -853,10 +853,16 @@ async function togglePaid(id){
 async function advanceOrder(id){
   const o=orders.find(x=>x.id===id); if(!o) return;
   const pipe=getPipeline(o.service,o.collection); if(o.status_idx>=pipe.length-1) return;
+  const oldStatus=pipe[o.status_idx];
   const newIdx=o.status_idx+1; const newStatus=pipe[newIdx];
   try{
     await updateStatusIdx(id,newIdx); o.status_idx=newIdx;
     showToast('Status updated!',false); updateMetrics(); renderOrders();
+    if(oldStatus==='Received'){
+      const laundryName=await getLaundryName();
+      const trackUrl=`${window.location.origin}/track.html?token=${o.tracking_token}`;
+      await sendWhatsApp(o.phone,'order_received',o.customer_name,laundryName,trackUrl);
+    }
     if(newStatus==='Ready'){
       const laundryName=await getLaundryName();
       await sendWhatsApp(o.phone,'order_ready',o.customer_name,laundryName);
@@ -1457,9 +1463,6 @@ async function addOrder(){
     const saved=await saveOrder({customer_name:name,phone,items,service:document.getElementById('f-type').value,collection:document.getElementById('f-collection').value,priority:document.getElementById('f-priority').value,status_idx:0,order_time:time,price});
     orders.unshift(saved);closeModal();showToast('Order saved!',false);updateMetrics();renderOrders();
     await upsertCustomer(name, phone);
-    const laundryName=await getLaundryName();
-    const trackUrl=`${window.location.origin}/track.html?token=${saved.tracking_token}`;
-    await sendWhatsApp(phone,'order_received',name,laundryName,trackUrl);
   }catch(e){showToast('Failed to save: '+e.message,true);}
   finally{btn.disabled=false;btn.textContent=lang==='ar'?'إضافة الطلب':'Add Order';}
 }
