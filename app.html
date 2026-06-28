@@ -758,9 +758,6 @@ function renderOrders(){
     groups[date].forEach(o => {
       const pipe=getPipeline(o.service,o.collection),isDone=o.status_idx>=pipe.length-1;
       const stepsHtml=pipe.map((s,i)=>{
-        // A step shows a tick ONLY when the order has moved strictly past it.
-        // The step the order is currently on shows its icon (active ring), never a tick.
-        // Nothing auto-completes the final step.
         const done = i < o.status_idx;
         const active = i === o.status_idx;
         const icon = STEP_ICONS[s] || '•';
