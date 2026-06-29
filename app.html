@@ -419,7 +419,19 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield;}
     <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:4px;">
       <button class="pay-opt" data-method="cash" onclick="choosePayment('cash')">💵 <span id="pay-cash">Cash</span></button>
       <button class="pay-opt" data-method="card" onclick="choosePayment('card')">💳 <span id="pay-card">Card</span></button>
-      <button class="pay-opt" data-method="cash_card" onclick="choosePayment('cash_card')">💵💳 <span id="pay-cashcard">Cash + Card</span></button>
+      <button class="pay-opt" data-method="cash_card" onclick="toggleSplit()">💵💳 <span id="pay-cashcard">Cash + Card</span></button>
+      <div id="split-section" style="display:none;border:1.5px solid var(--line);border-radius:10px;padding:12px;background:#FbFcFd;">
+        <div style="font-size:12px;color:var(--ink-2);margin-bottom:8px;" id="split-total-lbl">Order total: <b id="split-total">0</b> QAR</div>
+        <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px;">
+          <label style="font-size:13px;width:54px;" id="split-cash-lbl">💵 Cash</label>
+          <input type="number" id="split-cash" min="0" step="0.5" placeholder="0" oninput="splitCashInput()" style="flex:1;padding:8px 10px;font-size:14px;border:1px solid var(--line);border-radius:8px;">
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;">
+          <label style="font-size:13px;width:54px;" id="split-card-lbl">💳 Card</label>
+          <input type="number" id="split-card" readonly placeholder="0" style="flex:1;padding:8px 10px;font-size:14px;border:1px solid var(--line);border-radius:8px;background:#EEF4F8;color:var(--brand-d);font-weight:600;">
+        </div>
+        <button class="btn-submit" style="width:100%;" onclick="saveSplit()" id="split-save-btn">Save Split Payment</button>
+      </div>
       <button class="pay-opt" data-method="bank" onclick="choosePayment('bank')">🏦 <span id="pay-bank">Bank Transfer</span></button>
     </div>
     <div class="form-actions" style="justify-content:space-between;">
@@ -654,6 +666,12 @@ function setLang(l) {
     document.getElementById('pay-bank').textContent=A?'تحويل بنكي':'Bank Transfer';
     document.getElementById('pay-unpaid-btn').textContent=A?'إلغاء الدفع':'Mark Unpaid';
     document.getElementById('pay-cancel-btn').textContent=A?'إلغاء':'Cancel';
+    { const sc=document.getElementById('split-cash-lbl'); if(sc){
+      sc.textContent='💵 '+(A?'كاش':'Cash');
+      document.getElementById('split-card-lbl').textContent='💳 '+(A?'بطاقة':'Card');
+      document.getElementById('split-total-lbl').innerHTML=(A?'إجمالي الطلب: ':'Order total: ')+'<b id="split-total">'+document.getElementById('split-total').textContent+'</b> QAR';
+      document.getElementById('split-save-btn').textContent=A?'حفظ الدفع المقسم':'Save Split Payment';
+    } }
   } }
   document.getElementById('lbl-exp-cat').textContent=A?'الفئة':'Category';
   document.getElementById('lbl-exp-date').textContent=A?'التاريخ':'Date';
@@ -795,7 +813,8 @@ function renderOrders(){
       const svcLabel=lang==='ar'?AR_SERVICE[o.service]:o.service.replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase());
       const colLabel=lang==='ar'?AR_COLLECTION[o.collection]:(o.collection==='collect'?'Collect':'Delivery');
       const advLabel=isDone?(lang==='ar'?'مكتمل':'Done'):(lang==='ar'?'تقدم →':'Advance →');
-      const paidLabel=o.paid?(lang==='ar'?'✓ مدفوع':'✓ Paid')+(o.payment_method?' · '+payLabel(o.payment_method):''):(lang==='ar'?'غير مدفوع':'Unpaid');
+      const payDisplay = o.payment_method==='cash_card' ? (payLabel('cash_card')+(o.paid_cash!=null?` (${o.paid_cash}/${o.paid_card})`:'')) : payLabel(o.payment_method);
+      const paidLabel=o.paid?(lang==='ar'?'✓ مدفوع':'✓ Paid')+(o.payment_method?' · '+payDisplay:''):(lang==='ar'?'غير مدفوع':'Unpaid');
       html += `<div class="order-card${o.priority==='urgent'?' urgent':''}">
         <div class="order-num">#${String(o.id).padStart(3,'0')}</div>
         <div class="order-body">
@@ -822,7 +841,8 @@ async function printReceipt(id){
   const dateStr = date.toLocaleDateString('en-GB') + ' ' + (o.order_time||'');
   const itemLines = (o.items||'').split(',').map(s=>s.trim()).filter(Boolean)
     .map(it=>`<tr><td>${it}</td></tr>`).join('');
-  const paidStr = o.paid ? (A?'مدفوع ✓':'PAID ✓')+(o.payment_method?' · '+payLabel(o.payment_method):'') : (A?'غير مدفوع':'UNPAID');
+  const payRecv = o.payment_method==='cash_card' ? (payLabel('cash_card')+(o.paid_cash!=null?` (${A?'كاش':'Cash'} ${o.paid_cash} / ${A?'بطاقة':'Card'} ${o.paid_card})`:'')) : payLabel(o.payment_method);
+  const paidStr = o.paid ? (A?'مدفوع ✓':'PAID ✓')+(o.payment_method?' · '+payRecv:'') : (A?'غير مدفوع':'UNPAID');
   const svcLabel = A?AR_SERVICE[o.service]:(o.service||'').replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase());
   const html = `<!DOCTYPE html><html dir="${A?'rtl':'ltr'}"><head><meta charset="utf-8"><title>Receipt #${o.id}</title>
   <style>
@@ -875,7 +895,60 @@ function togglePaid(id){
   document.querySelectorAll('.pay-opt').forEach(b=>b.classList.toggle('selected', o && o.paid && b.dataset.method===o.payment_method));
   // show "Mark Unpaid" only if already paid
   document.getElementById('pay-unpaid-btn').style.display = (o && o.paid) ? 'inline-block' : 'none';
+  // reset / prefill split section
+  const splitSec = document.getElementById('split-section');
+  document.getElementById('split-total').textContent = (o ? (parseFloat(o.price)||0) : 0);
+  if (o && o.payment_method==='cash_card'){
+    splitSec.style.display='block';
+    document.getElementById('split-cash').value = o.paid_cash!=null ? o.paid_cash : '';
+    document.getElementById('split-card').value = o.paid_card!=null ? o.paid_card : '';
+  } else {
+    splitSec.style.display='none';
+    document.getElementById('split-cash').value='';
+    document.getElementById('split-card').value='';
+  }
   document.getElementById('payment-modal').classList.add('open');
+}
+
+function toggleSplit(){
+  const sec = document.getElementById('split-section');
+  const open = sec.style.display!=='none';
+  sec.style.display = open ? 'none' : 'block';
+  if(!open){ document.getElementById('split-cash').focus(); }
+}
+
+function splitCashInput(){
+  const o = orders.find(x=>x.id===payingOrderId); if(!o) return;
+  const total = parseFloat(o.price)||0;
+  let cash = parseFloat(document.getElementById('split-cash').value)||0;
+  if (cash > total) cash = total;
+  const card = Math.max(0, total - cash);
+  document.getElementById('split-card').value = card.toFixed(1).replace(/\.0$/,'');
+}
+
+async function saveSplit(){
+  const id = payingOrderId;
+  const o = orders.find(x=>x.id===id); if(!o){ closePaymentModal(); return; }
+  const A = lang==='ar';
+  const total = parseFloat(o.price)||0;
+  const cash = parseFloat(document.getElementById('split-cash').value)||0;
+  const card = parseFloat(document.getElementById('split-card').value)||0;
+  if (Math.abs((cash+card)-total) > 0.01){
+    showToast(A?'المجموع لا يساوي إجمالي الطلب':'Cash + Card must equal order total', true); return;
+  }
+  if (cash<=0 || card<=0){
+    showToast(A?'أدخل مبلغ الكاش والبطاقة':'Enter both cash and card amounts', true); return;
+  }
+  try{
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/orders?id=eq.${id}`, {
+      method: 'PATCH', headers: { ...getAuthHeaders(), 'Prefer': 'return=minimal' },
+      body: JSON.stringify({ paid: true, payment_method: 'cash_card', paid_cash: cash, paid_card: card })
+    });
+    if(!res.ok) throw new Error();
+    o.paid = true; o.payment_method = 'cash_card'; o.paid_cash = cash; o.paid_card = card;
+    showToast(A?'تم تسجيل الدفع':'Marked as paid', false);
+    closePaymentModal(); renderOrders();
+  } catch{ showToast('Failed to update payment.', true); }
 }
 
 function closePaymentModal(){
@@ -891,10 +964,10 @@ async function choosePayment(method){
   try{
     const res = await fetch(`${SUPABASE_URL}/rest/v1/orders?id=eq.${id}`, {
       method: 'PATCH', headers: { ...getAuthHeaders(), 'Prefer': 'return=minimal' },
-      body: JSON.stringify({ paid: true, payment_method: method })
+      body: JSON.stringify({ paid: true, payment_method: method, paid_cash: null, paid_card: null })
     });
     if(!res.ok) throw new Error();
-    o.paid = true; o.payment_method = method;
+    o.paid = true; o.payment_method = method; o.paid_cash = null; o.paid_card = null;
     showToast(lang==='ar'?'تم تسجيل الدفع':'Marked as paid', false);
     closePaymentModal(); renderOrders();
   } catch{ showToast('Failed to update payment.', true); }
@@ -1437,9 +1510,18 @@ function renderReport() {
     return `<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:0.5px solid #eee;font-size:13px;"><span>${label}</span><span style="font-weight:500;">${svcCounts[s]}</span></div>`;
   }).join('');
 
-  // revenue per payment method (paid orders only)
+  // revenue per payment method (paid orders only); split cash_card into its parts
   const payTotals = {};
-  paidOrders.forEach(o => { const m = o.payment_method || 'unknown'; payTotals[m] = (payTotals[m]||0) + (parseFloat(o.price)||0); });
+  paidOrders.forEach(o => {
+    const price = parseFloat(o.price)||0;
+    if (o.payment_method==='cash_card'){
+      payTotals['cash'] = (payTotals['cash']||0) + (parseFloat(o.paid_cash)||0);
+      payTotals['card'] = (payTotals['card']||0) + (parseFloat(o.paid_card)||0);
+    } else {
+      const m = o.payment_method || 'unknown';
+      payTotals[m] = (payTotals[m]||0) + price;
+    }
+  });
   const payRows = Object.keys(payTotals).map(m => {
     const label = m==='unknown' ? (A?'غير محدد':'Unspecified') : payLabel(m);
     return `<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:0.5px solid #eee;font-size:13px;"><span>${label}</span><span style="font-weight:500;">${payTotals[m].toFixed(0)} QAR</span></div>`;
