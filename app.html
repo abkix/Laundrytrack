@@ -132,6 +132,9 @@ button{font-family:var(--body);}
 .paid-btn.paid{background:var(--green);color:#fff;border-color:var(--green);}
 .paid-btn.unpaid{border-color:var(--line);color:var(--ink-3);}
 .paid-btn.unpaid:hover{border-color:var(--green);color:var(--green);}
+.pay-opt{display:flex;align-items:center;gap:10px;padding:13px 16px;font-size:14px;font-weight:600;font-family:var(--display);border:1.5px solid var(--line);border-radius:10px;background:#fff;color:var(--ink);cursor:pointer;transition:.15s;text-align:left;}
+.pay-opt:hover{border-color:var(--brand);background:#EEF4F8;color:var(--brand-d);}
+.pay-opt.selected{border-color:var(--green);background:#EAF7EF;color:var(--green);}
 .print-btn{padding:0 14px;height:36px;border:1px solid var(--line);background:#fff;border-radius:9px;cursor:pointer;font-size:12.5px;font-weight:600;font-family:var(--display);color:var(--ink-2);transition:.15s;}
 .print-btn:hover{background:var(--bg);border-color:var(--ink-3);color:var(--ink);}
 
@@ -410,6 +413,22 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield;}
   </div>
 </div>
 
+<div class="modal-backdrop" id="payment-modal" onclick="handlePaymentBackdropClick(event)">
+  <div class="modal" style="width:340px;">
+    <h3 id="pay-modal-title">Payment Method</h3>
+    <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:4px;">
+      <button class="pay-opt" data-method="cash" onclick="choosePayment('cash')">💵 <span id="pay-cash">Cash</span></button>
+      <button class="pay-opt" data-method="card" onclick="choosePayment('card')">💳 <span id="pay-card">Card</span></button>
+      <button class="pay-opt" data-method="cash_card" onclick="choosePayment('cash_card')">💵💳 <span id="pay-cashcard">Cash + Card</span></button>
+      <button class="pay-opt" data-method="bank" onclick="choosePayment('bank')">🏦 <span id="pay-bank">Bank Transfer</span></button>
+    </div>
+    <div class="form-actions" style="justify-content:space-between;">
+      <button class="btn-cancel" onclick="markUnpaidFromModal()" id="pay-unpaid-btn" style="color:#9B2B2B;border-color:#F0CFCF;">Mark Unpaid</button>
+      <button class="btn-cancel" onclick="closePaymentModal()" id="pay-cancel-btn">Cancel</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"><span id="toast-msg">Done!</span></div>
 
 <script>
@@ -426,6 +445,8 @@ const ALL_STATUSES_EN = ['Received','Washing','Ironing','Dry Cleaning','Ready','
 
 const EXPENSE_CATEGORIES = ['Rent','Salaries','Utilities','Supplies','Equipment','Maintenance','Other'];
 const AR_EXPENSE_CAT = { Rent:'إيجار', Salaries:'رواتب', Utilities:'فواتير', Supplies:'مستلزمات', Equipment:'معدات', Maintenance:'صيانة', Other:'أخرى' };
+const PAY_LABELS = { cash:{en:'Cash',ar:'كاش'}, card:{en:'Card',ar:'بطاقة'}, cash_card:{en:'Cash + Card',ar:'كاش + بطاقة'}, bank:{en:'Bank Transfer',ar:'تحويل بنكي'} };
+function payLabel(m){ return m ? (lang==='ar'?PAY_LABELS[m].ar:PAY_LABELS[m].en) : ''; }
 
 const LAUNDRY_GROUPS = [
   {
@@ -625,6 +646,15 @@ function setLang(l) {
   document.getElementById('modal-title').textContent=A?'طلب جديد':'New Order';
   document.getElementById('exp-modal-title').textContent=A?'مصروف جديد':'New Expense';
   document.getElementById('lbl-exp-amount').textContent=A?'المبلغ (ريال)':'Amount (QAR)';
+  { const e=document.getElementById('pay-modal-title'); if(e){
+    e.textContent=A?'طريقة الدفع':'Payment Method';
+    document.getElementById('pay-cash').textContent=A?'كاش':'Cash';
+    document.getElementById('pay-card').textContent=A?'بطاقة':'Card';
+    document.getElementById('pay-cashcard').textContent=A?'كاش + بطاقة':'Cash + Card';
+    document.getElementById('pay-bank').textContent=A?'تحويل بنكي':'Bank Transfer';
+    document.getElementById('pay-unpaid-btn').textContent=A?'إلغاء الدفع':'Mark Unpaid';
+    document.getElementById('pay-cancel-btn').textContent=A?'إلغاء':'Cancel';
+  } }
   document.getElementById('lbl-exp-cat').textContent=A?'الفئة':'Category';
   document.getElementById('lbl-exp-date').textContent=A?'التاريخ':'Date';
   document.getElementById('btn-exp-cancel').textContent=A?'إلغاء':'Cancel';
@@ -765,7 +795,7 @@ function renderOrders(){
       const svcLabel=lang==='ar'?AR_SERVICE[o.service]:o.service.replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase());
       const colLabel=lang==='ar'?AR_COLLECTION[o.collection]:(o.collection==='collect'?'Collect':'Delivery');
       const advLabel=isDone?(lang==='ar'?'مكتمل':'Done'):(lang==='ar'?'تقدم →':'Advance →');
-      const paidLabel=o.paid?(lang==='ar'?'✓ مدفوع':'✓ Paid'):(lang==='ar'?'غير مدفوع':'Unpaid');
+      const paidLabel=o.paid?(lang==='ar'?'✓ مدفوع':'✓ Paid')+(o.payment_method?' · '+payLabel(o.payment_method):''):(lang==='ar'?'غير مدفوع':'Unpaid');
       html += `<div class="order-card${o.priority==='urgent'?' urgent':''}">
         <div class="order-num">#${String(o.id).padStart(3,'0')}</div>
         <div class="order-body">
@@ -792,7 +822,7 @@ async function printReceipt(id){
   const dateStr = date.toLocaleDateString('en-GB') + ' ' + (o.order_time||'');
   const itemLines = (o.items||'').split(',').map(s=>s.trim()).filter(Boolean)
     .map(it=>`<tr><td>${it}</td></tr>`).join('');
-  const paidStr = o.paid ? (A?'مدفوع ✓':'PAID ✓') : (A?'غير مدفوع':'UNPAID');
+  const paidStr = o.paid ? (A?'مدفوع ✓':'PAID ✓')+(o.payment_method?' · '+payLabel(o.payment_method):'') : (A?'غير مدفوع':'UNPAID');
   const svcLabel = A?AR_SERVICE[o.service]:(o.service||'').replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase());
   const html = `<!DOCTYPE html><html dir="${A?'rtl':'ltr'}"><head><meta charset="utf-8"><title>Receipt #${o.id}</title>
   <style>
@@ -835,18 +865,53 @@ async function printReceipt(id){
   w.document.close();
 }
 
-async function togglePaid(id){
-  const o=orders.find(x=>x.id===id); if(!o) return;
-  const newPaid = !o.paid;
+let payingOrderId = null;
+
+function togglePaid(id){
+  payingOrderId = id;
+  const o = orders.find(x=>x.id===id);
+  const A = lang==='ar';
+  // highlight current method if already paid
+  document.querySelectorAll('.pay-opt').forEach(b=>b.classList.toggle('selected', o && o.paid && b.dataset.method===o.payment_method));
+  // show "Mark Unpaid" only if already paid
+  document.getElementById('pay-unpaid-btn').style.display = (o && o.paid) ? 'inline-block' : 'none';
+  document.getElementById('payment-modal').classList.add('open');
+}
+
+function closePaymentModal(){
+  document.getElementById('payment-modal').classList.remove('open');
+  payingOrderId = null;
+}
+
+function handlePaymentBackdropClick(e){ if(e.target===document.getElementById('payment-modal')) closePaymentModal(); }
+
+async function choosePayment(method){
+  const id = payingOrderId;
+  const o = orders.find(x=>x.id===id); if(!o){ closePaymentModal(); return; }
   try{
     const res = await fetch(`${SUPABASE_URL}/rest/v1/orders?id=eq.${id}`, {
       method: 'PATCH', headers: { ...getAuthHeaders(), 'Prefer': 'return=minimal' },
-      body: JSON.stringify({ paid: newPaid })
+      body: JSON.stringify({ paid: true, payment_method: method })
     });
     if(!res.ok) throw new Error();
-    o.paid = newPaid;
-    showToast(newPaid?(lang==='ar'?'تم تسجيل الدفع':'Marked as paid'):(lang==='ar'?'تم إلغاء الدفع':'Marked as unpaid'), false);
-    renderOrders();
+    o.paid = true; o.payment_method = method;
+    showToast(lang==='ar'?'تم تسجيل الدفع':'Marked as paid', false);
+    closePaymentModal(); renderOrders();
+  } catch{ showToast('Failed to update payment.', true); }
+}
+
+async function markUnpaidFromModal(){
+  const id = payingOrderId;
+  const o = orders.find(x=>x.id===id); if(!o){ closePaymentModal(); return; }
+  try{
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/orders?id=eq.${id}`, {
+      method: 'PATCH', headers: { ...getAuthHeaders(), 'Prefer': 'return=minimal' },
+      body: JSON.stringify({ paid: false, payment_method: null })
+    });
+    if(!res.ok) throw new Error();
+    o.paid = false; o.payment_method = null;
+    showToast(lang==='ar'?'تم إلغاء الدفع':'Marked as unpaid', false);
+    closePaymentModal(); renderOrders();
   } catch{ showToast('Failed to update payment.', true); }
 }
 
@@ -1372,6 +1437,14 @@ function renderReport() {
     return `<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:0.5px solid #eee;font-size:13px;"><span>${label}</span><span style="font-weight:500;">${svcCounts[s]}</span></div>`;
   }).join('');
 
+  // revenue per payment method (paid orders only)
+  const payTotals = {};
+  paidOrders.forEach(o => { const m = o.payment_method || 'unknown'; payTotals[m] = (payTotals[m]||0) + (parseFloat(o.price)||0); });
+  const payRows = Object.keys(payTotals).map(m => {
+    const label = m==='unknown' ? (A?'غير محدد':'Unspecified') : payLabel(m);
+    return `<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:0.5px solid #eee;font-size:13px;"><span>${label}</span><span style="font-weight:500;">${payTotals[m].toFixed(0)} QAR</span></div>`;
+  }).join('');
+
   document.getElementById('report-content').innerHTML = `
     <div class="metrics" style="padding:0;background:transparent;border:none;grid-template-columns:repeat(2,1fr);">
       <div class="metric"><div class="metric-label">${A?'إجمالي الطلبات':'Total Orders'}</div><div class="metric-value">${totalOrders}</div></div>
@@ -1382,6 +1455,10 @@ function renderReport() {
     <div style="background:#fff;border:0.5px solid #e0e0de;border-radius:12px;padding:1rem 1.25rem;margin-top:8px;">
       <div style="font-size:13px;font-weight:600;margin-bottom:8px;">${A?'الطلبات حسب الخدمة':'Orders by Service'}</div>
       ${svcRows || `<div style="font-size:13px;color:#888;">${A?'لا توجد بيانات':'No data'}</div>`}
+    </div>
+    <div style="background:#fff;border:0.5px solid #e0e0de;border-radius:12px;padding:1rem 1.25rem;margin-top:8px;">
+      <div style="font-size:13px;font-weight:600;margin-bottom:8px;">${A?'الإيرادات حسب طريقة الدفع':'Revenue by Payment Method'}</div>
+      ${payRows || `<div style="font-size:13px;color:#888;">${A?'لا توجد بيانات':'No data'}</div>`}
     </div>`;
 }
 
