@@ -131,6 +131,7 @@ button{font-family:var(--body);}
 .paid-btn{padding:8px 14px;font-size:12.5px;font-weight:600;font-family:var(--display);border:1.5px solid var(--green);color:var(--green);background:transparent;border-radius:9px;cursor:pointer;white-space:nowrap;transition:.15s;}
 .paid-btn.paid{background:var(--green);color:#fff;border-color:var(--green);}
 .paid-btn.unpaid{border-color:var(--line);color:var(--ink-3);}
+.paid-btn.partial{background:#FFF6E9;border-color:var(--amber);color:var(--amber);}
 .paid-btn.unpaid:hover{border-color:var(--green);color:var(--green);}
 .pay-opt{display:flex;align-items:center;gap:10px;padding:13px 16px;font-size:14px;font-weight:600;font-family:var(--display);border:1.5px solid var(--line);border-radius:10px;background:#fff;color:var(--ink);cursor:pointer;transition:.15s;text-align:left;}
 .pay-opt:hover{border-color:var(--brand);background:#EEF4F8;color:var(--brand-d);}
@@ -441,6 +442,24 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield;}
         <button class="btn-submit" style="width:100%;" onclick="saveSplit()" id="split-save-btn">Save Split Payment</button>
       </div>
       <button class="pay-opt" data-method="bank" onclick="choosePayment('bank')">🏦 <span id="pay-bank">Bank Transfer</span></button>
+      <button class="pay-opt" data-method="partial" onclick="togglePartial()">📝 <span id="pay-partial">Partial / Deposit</span></button>
+      <div id="partial-section" style="display:none;border:1.5px solid var(--amber);border-radius:10px;padding:12px;background:#FFFaF2;">
+        <div style="font-size:12px;color:var(--ink-2);margin-bottom:8px;" id="partial-total-lbl">Order total: <b id="partial-total">0</b> QAR</div>
+        <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px;">
+          <label style="font-size:13px;width:80px;" id="partial-paid-lbl">Paid now</label>
+          <input type="number" id="partial-paid" min="0" step="0.5" placeholder="0" oninput="partialPaidInput()" style="flex:1;padding:8px 10px;font-size:14px;border:1px solid var(--line);border-radius:8px;">
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;">
+          <label style="font-size:13px;width:80px;" id="partial-left-lbl">Remaining</label>
+          <input type="number" id="partial-left" readonly placeholder="0" style="flex:1;padding:8px 10px;font-size:14px;border:1px solid var(--line);border-radius:8px;background:#FBECEC;color:#B5352F;font-weight:600;">
+        </div>
+        <div style="display:flex;gap:6px;margin-bottom:10px;">
+          <button class="pay-opt" style="flex:1;padding:8px;font-size:12px;" data-pm="cash" onclick="setPartialMethod('cash')">💵</button>
+          <button class="pay-opt" style="flex:1;padding:8px;font-size:12px;" data-pm="card" onclick="setPartialMethod('card')">💳</button>
+          <button class="pay-opt" style="flex:1;padding:8px;font-size:12px;" data-pm="bank" onclick="setPartialMethod('bank')">🏦</button>
+        </div>
+        <button class="btn-submit" style="width:100%;" onclick="savePartial()" id="partial-save-btn">Save Deposit</button>
+      </div>
     </div>
     <div class="form-actions" style="justify-content:space-between;">
       <button class="btn-cancel" onclick="markUnpaidFromModal()" id="pay-unpaid-btn" style="color:#9B2B2B;border-color:#F0CFCF;">Mark Unpaid</button>
@@ -689,6 +708,13 @@ function setLang(l) {
       document.getElementById('split-total-lbl').innerHTML=(A?'إجمالي الطلب: ':'Order total: ')+'<b id="split-total">'+document.getElementById('split-total').textContent+'</b> QAR';
       document.getElementById('split-save-btn').textContent=A?'حفظ الدفع المقسم':'Save Split Payment';
     } }
+    { const pp=document.getElementById('pay-partial'); if(pp){
+      pp.textContent=A?'جزئي / عربون':'Partial / Deposit';
+      document.getElementById('partial-paid-lbl').textContent=A?'مدفوع الآن':'Paid now';
+      document.getElementById('partial-left-lbl').textContent=A?'المتبقي':'Remaining';
+      document.getElementById('partial-total-lbl').innerHTML=(A?'إجمالي الطلب: ':'Order total: ')+'<b id="partial-total">'+document.getElementById('partial-total').textContent+'</b> QAR';
+      document.getElementById('partial-save-btn').textContent=A?'حفظ العربون':'Save Deposit';
+    } }
   } }
   document.getElementById('lbl-exp-cat').textContent=A?'الفئة':'Category';
   document.getElementById('lbl-exp-date').textContent=A?'التاريخ':'Date';
@@ -831,7 +857,19 @@ function renderOrders(){
       const colLabel=lang==='ar'?AR_COLLECTION[o.collection]:(o.collection==='collect'?'Collect':'Delivery');
       const advLabel=isDone?(lang==='ar'?'مكتمل':'Done'):(lang==='ar'?'تقدم →':'Advance →');
       const payDisplay = o.payment_method==='cash_card' ? (payLabel('cash_card')+(o.paid_cash!=null?` (${o.paid_cash}/${o.paid_card})`:'')) : payLabel(o.payment_method);
-      const paidLabel=o.paid?(lang==='ar'?'✓ مدفوع':'✓ Paid')+(o.payment_method?' · '+payDisplay:''):(lang==='ar'?'غير مدفوع':'Unpaid');
+      const isPartial = !o.paid && (o.amount_paid>0);
+      const balanceLeft = ((parseFloat(o.price)||0) - (parseFloat(o.amount_paid)||0));
+      let paidLabel, paidClass;
+      if (o.paid){
+        paidLabel=(lang==='ar'?'✓ مدفوع':'✓ Paid')+(o.payment_method?' · '+payDisplay:'');
+        paidClass='paid';
+      } else if (isPartial){
+        paidLabel=(lang==='ar'?'عربون':'Deposit')+` ${o.amount_paid} · ${lang==='ar'?'باقي':'left'} ${balanceLeft.toFixed(0)}`;
+        paidClass='partial';
+      } else {
+        paidLabel=(lang==='ar'?'غير مدفوع':'Unpaid');
+        paidClass='unpaid';
+      }
       html += `<div class="order-card${o.priority==='urgent'?' urgent':''}">
         <div class="order-num">#${String(o.id).padStart(3,'0')}</div>
         <div class="order-body">
@@ -840,7 +878,7 @@ function renderOrders(){
           <div class="order-row2"><div class="status-steps">${stepsHtml}</div>
           <div class="order-actions">
             <button class="print-btn" onclick="printReceipt(${o.id})">${lang==='ar'?'طباعة':'Print'}</button>
-            <button class="paid-btn ${o.paid?'paid':'unpaid'}" onclick="togglePaid(${o.id})">${paidLabel}</button>
+            <button class="paid-btn ${paidClass}" onclick="togglePaid(${o.id})">${paidLabel}</button>
             <button class="advance-btn" onclick="advanceOrder(${o.id})" ${isDone?'disabled':''}>${advLabel}</button>
           </div></div>
         </div></div>`;
@@ -910,8 +948,9 @@ function togglePaid(id){
   const A = lang==='ar';
   // highlight current method if already paid
   document.querySelectorAll('.pay-opt').forEach(b=>b.classList.toggle('selected', o && o.paid && b.dataset.method===o.payment_method));
-  // show "Mark Unpaid" only if already paid
-  document.getElementById('pay-unpaid-btn').style.display = (o && o.paid) ? 'inline-block' : 'none';
+  // show "Mark Unpaid" if paid OR partially paid
+  const hasPayment = o && (o.paid || (o.amount_paid>0));
+  document.getElementById('pay-unpaid-btn').style.display = hasPayment ? 'inline-block' : 'none';
   // reset / prefill split section
   const splitSec = document.getElementById('split-section');
   document.getElementById('split-total').textContent = (o ? (parseFloat(o.price)||0) : 0);
@@ -923,6 +962,20 @@ function togglePaid(id){
     splitSec.style.display='none';
     document.getElementById('split-cash').value='';
     document.getElementById('split-card').value='';
+  }
+  // reset / prefill partial section
+  const partSec = document.getElementById('partial-section');
+  document.getElementById('partial-total').textContent = (o ? (parseFloat(o.price)||0) : 0);
+  if (o && !o.paid && o.amount_paid>0){
+    partSec.style.display='block';
+    document.getElementById('partial-paid').value = o.amount_paid;
+    partialPaidInput();
+    setPartialMethod(o.payment_method||'cash');
+  } else {
+    partSec.style.display='none';
+    document.getElementById('partial-paid').value='';
+    document.getElementById('partial-left').value='';
+    partialMethod='cash';
   }
   document.getElementById('payment-modal').classList.add('open');
 }
@@ -959,11 +1012,51 @@ async function saveSplit(){
   try{
     const res = await fetch(`${SUPABASE_URL}/rest/v1/orders?id=eq.${id}`, {
       method: 'PATCH', headers: { ...getAuthHeaders(), 'Prefer': 'return=minimal' },
-      body: JSON.stringify({ paid: true, payment_method: 'cash_card', paid_cash: cash, paid_card: card })
+      body: JSON.stringify({ paid: true, payment_method: 'cash_card', paid_cash: cash, paid_card: card, amount_paid: total })
     });
     if(!res.ok) throw new Error();
-    o.paid = true; o.payment_method = 'cash_card'; o.paid_cash = cash; o.paid_card = card;
+    o.paid = true; o.payment_method = 'cash_card'; o.paid_cash = cash; o.paid_card = card; o.amount_paid = total;
     showToast(A?'تم تسجيل الدفع':'Marked as paid', false);
+    closePaymentModal(); renderOrders();
+  } catch{ showToast('Failed to update payment.', true); }
+}
+
+let partialMethod = 'cash';
+function togglePartial(){
+  const sec = document.getElementById('partial-section');
+  const open = sec.style.display!=='none';
+  sec.style.display = open ? 'none' : 'block';
+  if(!open){ document.getElementById('partial-paid').focus(); }
+}
+function setPartialMethod(m){
+  partialMethod = m;
+  document.querySelectorAll('#partial-section .pay-opt').forEach(b=>b.classList.toggle('selected', b.dataset.pm===m));
+}
+function partialPaidInput(){
+  const o = orders.find(x=>x.id===payingOrderId); if(!o) return;
+  const total = parseFloat(o.price)||0;
+  let paid = parseFloat(document.getElementById('partial-paid').value)||0;
+  if (paid > total) paid = total;
+  const left = Math.max(0, total - paid);
+  document.getElementById('partial-left').value = left.toFixed(1).replace(/\.0$/,'');
+}
+async function savePartial(){
+  const id = payingOrderId;
+  const o = orders.find(x=>x.id===id); if(!o){ closePaymentModal(); return; }
+  const A = lang==='ar';
+  const total = parseFloat(o.price)||0;
+  const paid = parseFloat(document.getElementById('partial-paid').value)||0;
+  if (paid<=0){ showToast(A?'أدخل المبلغ المدفوع':'Enter the amount paid', true); return; }
+  if (paid>=total){ showToast(A?'هذا دفع كامل وليس جزئي':'That is full payment, use a full method', true); return; }
+  const fullyPaid = false; // partial is never fully paid
+  try{
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/orders?id=eq.${id}`, {
+      method: 'PATCH', headers: { ...getAuthHeaders(), 'Prefer': 'return=minimal' },
+      body: JSON.stringify({ paid: false, payment_method: partialMethod, amount_paid: paid, paid_cash: null, paid_card: null })
+    });
+    if(!res.ok) throw new Error();
+    o.paid = false; o.payment_method = partialMethod; o.amount_paid = paid; o.paid_cash=null; o.paid_card=null;
+    showToast(A?'تم تسجيل العربون':'Deposit saved', false);
     closePaymentModal(); renderOrders();
   } catch{ showToast('Failed to update payment.', true); }
 }
@@ -981,10 +1074,10 @@ async function choosePayment(method){
   try{
     const res = await fetch(`${SUPABASE_URL}/rest/v1/orders?id=eq.${id}`, {
       method: 'PATCH', headers: { ...getAuthHeaders(), 'Prefer': 'return=minimal' },
-      body: JSON.stringify({ paid: true, payment_method: method, paid_cash: null, paid_card: null })
+      body: JSON.stringify({ paid: true, payment_method: method, paid_cash: null, paid_card: null, amount_paid: (parseFloat(o.price)||0) })
     });
     if(!res.ok) throw new Error();
-    o.paid = true; o.payment_method = method; o.paid_cash = null; o.paid_card = null;
+    o.paid = true; o.payment_method = method; o.paid_cash = null; o.paid_card = null; o.amount_paid = (parseFloat(o.price)||0);
     showToast(lang==='ar'?'تم تسجيل الدفع':'Marked as paid', false);
     closePaymentModal(); renderOrders();
   } catch{ showToast('Failed to update payment.', true); }
@@ -996,10 +1089,10 @@ async function markUnpaidFromModal(){
   try{
     const res = await fetch(`${SUPABASE_URL}/rest/v1/orders?id=eq.${id}`, {
       method: 'PATCH', headers: { ...getAuthHeaders(), 'Prefer': 'return=minimal' },
-      body: JSON.stringify({ paid: false, payment_method: null })
+      body: JSON.stringify({ paid: false, payment_method: null, amount_paid: 0, paid_cash: null, paid_card: null })
     });
     if(!res.ok) throw new Error();
-    o.paid = false; o.payment_method = null;
+    o.paid = false; o.payment_method = null; o.amount_paid = 0; o.paid_cash = null; o.paid_card = null;
     showToast(lang==='ar'?'تم إلغاء الدفع':'Marked as unpaid', false);
     closePaymentModal(); renderOrders();
   } catch{ showToast('Failed to update payment.', true); }
@@ -1564,6 +1657,23 @@ function renderReport() {
     return `<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:0.5px solid #eee;font-size:13px;"><span>${label}</span><span style="font-weight:500;">${payTotals[m].toFixed(0)} QAR</span></div>`;
   }).join('');
 
+  // per-order rows
+  const orderRows = periodOrders.map(o => {
+    const total = parseFloat(o.price)||0;
+    const paidAmt = o.paid ? total : (parseFloat(o.amount_paid)||0);
+    const left = total - paidAmt;
+    const method = o.payment_method ? payLabel(o.payment_method) : (A?'—':'—');
+    const leftColor = left>0.01 ? '#B5352F' : '#1D9E75';
+    return `<tr>
+      <td style="padding:6px 4px;border-bottom:0.5px solid #eee;">#${String(o.id).padStart(3,'0')}</td>
+      <td style="padding:6px 4px;border-bottom:0.5px solid #eee;">${o.customer_name}</td>
+      <td style="padding:6px 4px;border-bottom:0.5px solid #eee;">${total.toFixed(0)}</td>
+      <td style="padding:6px 4px;border-bottom:0.5px solid #eee;">${paidAmt.toFixed(0)}</td>
+      <td style="padding:6px 4px;border-bottom:0.5px solid #eee;color:${leftColor};font-weight:600;">${left.toFixed(0)}</td>
+      <td style="padding:6px 4px;border-bottom:0.5px solid #eee;">${method}</td>
+    </tr>`;
+  }).join('');
+
   document.getElementById('report-content').innerHTML = `
     <div class="metrics" style="padding:0;background:transparent;border:none;grid-template-columns:repeat(2,1fr);">
       <div class="metric"><div class="metric-label">${A?'إجمالي الطلبات':'Total Orders'}</div><div class="metric-value">${totalOrders}</div></div>
@@ -1578,12 +1688,26 @@ function renderReport() {
     <div style="background:#fff;border:0.5px solid #e0e0de;border-radius:12px;padding:1rem 1.25rem;margin-top:8px;">
       <div style="font-size:13px;font-weight:600;margin-bottom:8px;">${A?'الإيرادات حسب طريقة الدفع':'Revenue by Payment Method'}</div>
       ${payRows || `<div style="font-size:13px;color:#888;">${A?'لا توجد بيانات':'No data'}</div>`}
+    </div>
+    <div style="background:#fff;border:0.5px solid #e0e0de;border-radius:12px;padding:1rem 1.25rem;margin-top:8px;overflow-x:auto;">
+      <div style="font-size:13px;font-weight:600;margin-bottom:8px;">${A?'تفاصيل الطلبات':'Order Details'}</div>
+      <table style="width:100%;border-collapse:collapse;font-size:12.5px;min-width:560px;">
+        <tr style="text-align:${A?'right':'left'};color:#54707E;">
+          <th style="padding:6px 4px;border-bottom:1px solid #e0e0de;">#</th>
+          <th style="padding:6px 4px;border-bottom:1px solid #e0e0de;">${A?'العميل':'Customer'}</th>
+          <th style="padding:6px 4px;border-bottom:1px solid #e0e0de;">${A?'الإجمالي':'Total'}</th>
+          <th style="padding:6px 4px;border-bottom:1px solid #e0e0de;">${A?'مدفوع':'Paid'}</th>
+          <th style="padding:6px 4px;border-bottom:1px solid #e0e0de;">${A?'باقي':'Left'}</th>
+          <th style="padding:6px 4px;border-bottom:1px solid #e0e0de;">${A?'الطريقة':'Method'}</th>
+        </tr>
+        ${orderRows || `<tr><td colspan="6" style="padding:10px;color:#888;text-align:center;">${A?'لا توجد طلبات':'No orders'}</td></tr>`}
+      </table>
     </div>`;
 
   // stash for printing
   lastReport = {
     fromDate, toDate, totalOrders, totalRevenue, paidRevenue, unpaidRevenue, urgentCount,
-    svcCounts, payTotals
+    svcCounts, payTotals, periodOrders
   };
 }
 
@@ -1609,6 +1733,13 @@ async function printReport(){
   const payRows = Object.keys(r.payTotals).map(m=>{
     const label = m==='unknown'?(A?'غير محدد':'Unspecified'):payLabel(m);
     return `<tr><td>${label}</td><td style="text-align:right;">${r.payTotals[m].toFixed(0)} QAR</td></tr>`;
+  }).join('');
+  const orderRows = (r.periodOrders||[]).map(o=>{
+    const total = parseFloat(o.price)||0;
+    const paidAmt = o.paid ? total : (parseFloat(o.amount_paid)||0);
+    const left = total - paidAmt;
+    const method = o.payment_method ? payLabel(o.payment_method) : '—';
+    return `<tr><td>#${String(o.id).padStart(3,'0')}</td><td>${o.customer_name}</td><td style="text-align:right;">${total.toFixed(0)}</td><td style="text-align:right;">${paidAmt.toFixed(0)}</td><td style="text-align:right;">${left.toFixed(0)}</td><td>${method}</td></tr>`;
   }).join('');
   const html = `<!DOCTYPE html><html dir="${A?'rtl':'ltr'}"><head><meta charset="utf-8"><title>Report</title>
   <style>
@@ -1636,6 +1767,8 @@ async function printReport(){
   <table><tr><th>${A?'الخدمة':'Service'}</th><th style="text-align:right;">${A?'العدد':'Count'}</th></tr>${svcRows||`<tr><td colspan=2>${A?'لا توجد بيانات':'No data'}</td></tr>`}</table>
   <h2>${A?'الإيرادات حسب طريقة الدفع':'Revenue by Payment Method'}</h2>
   <table><tr><th>${A?'الطريقة':'Method'}</th><th style="text-align:right;">${A?'المبلغ':'Amount'}</th></tr>${payRows||`<tr><td colspan=2>${A?'لا توجد بيانات':'No data'}</td></tr>`}</table>
+  <h2>${A?'تفاصيل الطلبات':'Order Details'}</h2>
+  <table><tr><th>#</th><th>${A?'العميل':'Customer'}</th><th style="text-align:right;">${A?'الإجمالي':'Total'}</th><th style="text-align:right;">${A?'مدفوع':'Paid'}</th><th style="text-align:right;">${A?'باقي':'Left'}</th><th>${A?'الطريقة':'Method'}</th></tr>${orderRows||`<tr><td colspan=6>${A?'لا توجد طلبات':'No orders'}</td></tr>`}</table>
   <div class="foot">Powered by Washly · ${new Date().toLocaleDateString('en-GB')}</div>
   <script>window.onload=function(){window.print();}<\/script>
   </body></html>`;
