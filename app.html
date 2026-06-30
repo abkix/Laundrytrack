@@ -290,10 +290,18 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield;}
   </div>
 
   <div class="customers-view" id="reports-view">
-    <div style="display:flex;gap:6px;margin-bottom:4px;">
+    <div style="display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap;align-items:center;">
       <button class="filter-btn active" id="rep-today" onclick="setReportPeriod('today')">Today</button>
       <button class="filter-btn" id="rep-week" onclick="setReportPeriod('week')">Last 7 Days</button>
       <button class="filter-btn" id="rep-month" onclick="setReportPeriod('month')">Last 30 Days</button>
+      <button class="filter-btn" id="rep-custom" onclick="setReportPeriod('custom')">Custom</button>
+      <button class="print-btn" onclick="printReport()" id="rep-print-btn" style="margin-left:auto;">🖨 <span id="rep-print-lbl">Print</span></button>
+    </div>
+    <div id="custom-range" style="display:none;gap:8px;margin-bottom:8px;flex-wrap:wrap;align-items:center;">
+      <label style="font-size:12px;color:var(--ink-2);" id="rep-from-lbl">From</label>
+      <input type="date" id="rep-from" onchange="renderReport()" style="padding:7px 10px;font-size:13px;border:1px solid var(--line);border-radius:8px;">
+      <label style="font-size:12px;color:var(--ink-2);" id="rep-to-lbl">To</label>
+      <input type="date" id="rep-to" onchange="renderReport()" style="padding:7px 10px;font-size:13px;border:1px solid var(--line);border-radius:8px;">
     </div>
     <div id="report-content"><div class="loading-state">Loading report...</div></div>
   </div>
@@ -640,6 +648,15 @@ function setLang(l) {
   document.getElementById('tab-orders-lbl').textContent=A?'الطلبات':'Orders';
   document.getElementById('tab-customers-lbl').textContent=A?'العملاء':'Customers';
   document.getElementById('tab-reports-lbl').textContent=A?'التقارير':'Reports';
+  { const rc=document.getElementById('rep-custom'); if(rc){
+    document.getElementById('rep-today').textContent=A?'اليوم':'Today';
+    document.getElementById('rep-week').textContent=A?'آخر 7 أيام':'Last 7 Days';
+    document.getElementById('rep-month').textContent=A?'آخر 30 يوم':'Last 30 Days';
+    rc.textContent=A?'مخصص':'Custom';
+    document.getElementById('rep-print-lbl').textContent=A?'طباعة':'Print';
+    document.getElementById('rep-from-lbl').textContent=A?'من':'From';
+    document.getElementById('rep-to-lbl').textContent=A?'إلى':'To';
+  } }
   document.getElementById('tab-expenses-lbl').textContent=A?'المصروفات':'Expenses';
   document.getElementById('tab-prices-lbl').textContent=A?'الأسعار':'Prices';
   document.getElementById('prices-title').textContent=A?'إعدادات الأسعار':'Price Settings';
@@ -1045,7 +1062,7 @@ function formatPhone(p){
   return '+974'+p;
 }
 
-let customers = [], activeTab = 'orders', reportPeriod = 'today';
+let customers = [], activeTab = 'orders', reportPeriod = 'today', lastReport = null;
 let expenses = [], expensePeriod = 'today';
 
 function switchTab(tab) {
@@ -1122,7 +1139,18 @@ function changeExpensePin(){
 
 function setReportPeriod(p) {
   reportPeriod = p;
-  ['today','week','month'].forEach(k => document.getElementById('rep-'+k).classList.toggle('active', k===p));
+  ['today','week','month','custom'].forEach(k => document.getElementById('rep-'+k).classList.toggle('active', k===p));
+  const cr = document.getElementById('custom-range');
+  if (p==='custom'){
+    cr.style.display='flex';
+    // default range: last 30 days → today, if empty
+    if(!document.getElementById('rep-from').value){
+      document.getElementById('rep-from').value = new Date(Date.now()-30*86400000).toISOString().split('T')[0];
+      document.getElementById('rep-to').value = new Date().toISOString().split('T')[0];
+    }
+  } else {
+    cr.style.display='none';
+  }
   renderReport();
 }
 
@@ -1488,12 +1516,21 @@ function calcOrderTotal(){
 
 function renderReport() {
   const now = new Date();
-  let fromDate;
+  let fromDate, toDate = null;
   if (reportPeriod === 'today') fromDate = new Date(now.toISOString().split('T')[0]);
   else if (reportPeriod === 'week') fromDate = new Date(Date.now() - 7*86400000);
-  else fromDate = new Date(Date.now() - 30*86400000);
+  else if (reportPeriod === 'month') fromDate = new Date(Date.now() - 30*86400000);
+  else { // custom
+    const f = document.getElementById('rep-from').value;
+    const t = document.getElementById('rep-to').value;
+    fromDate = f ? new Date(f+'T00:00:00') : new Date(Date.now()-30*86400000);
+    toDate = t ? new Date(t+'T23:59:59') : new Date();
+  }
 
-  const periodOrders = orders.filter(o => new Date(o.created_at) >= fromDate);
+  const periodOrders = orders.filter(o => {
+    const d = new Date(o.created_at);
+    return d >= fromDate && (!toDate || d <= toDate);
+  });
   const totalOrders = periodOrders.length;
   const totalRevenue = periodOrders.reduce((s,o) => s + (parseFloat(o.price)||0), 0);
   const paidOrders = periodOrders.filter(o => o.paid);
@@ -1542,6 +1579,69 @@ function renderReport() {
       <div style="font-size:13px;font-weight:600;margin-bottom:8px;">${A?'الإيرادات حسب طريقة الدفع':'Revenue by Payment Method'}</div>
       ${payRows || `<div style="font-size:13px;color:#888;">${A?'لا توجد بيانات':'No data'}</div>`}
     </div>`;
+
+  // stash for printing
+  lastReport = {
+    fromDate, toDate, totalOrders, totalRevenue, paidRevenue, unpaidRevenue, urgentCount,
+    svcCounts, payTotals
+  };
+}
+
+function reportRangeLabel(){
+  const A = lang==='ar';
+  if (reportPeriod==='today') return A?'اليوم':'Today';
+  if (reportPeriod==='week') return A?'آخر 7 أيام':'Last 7 Days';
+  if (reportPeriod==='month') return A?'آخر 30 يوم':'Last 30 Days';
+  const f = document.getElementById('rep-from').value, t = document.getElementById('rep-to').value;
+  const fmt = d => d ? new Date(d).toLocaleDateString('en-GB') : '';
+  return `${fmt(f)} → ${fmt(t)}`;
+}
+
+async function printReport(){
+  if (!lastReport){ showToast('No report to print', true); return; }
+  const A = lang==='ar';
+  const r = lastReport;
+  const laundryName = await getLaundryName();
+  const svcRows = Object.keys(r.svcCounts).map(s=>{
+    const label = A?AR_SERVICE[s]:s.replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase());
+    return `<tr><td>${label}</td><td style="text-align:right;">${r.svcCounts[s]}</td></tr>`;
+  }).join('');
+  const payRows = Object.keys(r.payTotals).map(m=>{
+    const label = m==='unknown'?(A?'غير محدد':'Unspecified'):payLabel(m);
+    return `<tr><td>${label}</td><td style="text-align:right;">${r.payTotals[m].toFixed(0)} QAR</td></tr>`;
+  }).join('');
+  const html = `<!DOCTYPE html><html dir="${A?'rtl':'ltr'}"><head><meta charset="utf-8"><title>Report</title>
+  <style>
+    body{font-family:Arial,sans-serif;max-width:700px;margin:24px auto;color:#0C2A3A;padding:0 16px;}
+    h1{font-size:20px;margin:0 0 4px;}
+    .sub{color:#666;font-size:13px;margin-bottom:18px;}
+    table{width:100%;border-collapse:collapse;margin-bottom:20px;font-size:14px;}
+    th,td{padding:8px 6px;border-bottom:1px solid #e0e0de;text-align:${A?'right':'left'};}
+    th{background:#F4F7F9;font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:#54707E;}
+    .summary td{font-size:15px;}
+    .summary td:last-child{text-align:right;font-weight:700;}
+    h2{font-size:14px;margin:18px 0 6px;color:#1F5E8C;}
+    .foot{text-align:center;color:#999;font-size:11px;margin-top:24px;}
+  </style></head><body>
+  <h1>${laundryName}</h1>
+  <div class="sub">${A?'تقرير':'Report'} · ${reportRangeLabel()}</div>
+  <table class="summary">
+    <tr><td>${A?'إجمالي الطلبات':'Total Orders'}</td><td>${r.totalOrders}</td></tr>
+    <tr><td>${A?'إجمالي الإيرادات':'Total Revenue'}</td><td>${r.totalRevenue.toFixed(0)} QAR</td></tr>
+    <tr><td>${A?'المدفوع':'Paid'}</td><td>${r.paidRevenue.toFixed(0)} QAR</td></tr>
+    <tr><td>${A?'غير المدفوع':'Unpaid'}</td><td>${r.unpaidRevenue.toFixed(0)} QAR</td></tr>
+    <tr><td>${A?'عاجل':'Urgent Orders'}</td><td>${r.urgentCount}</td></tr>
+  </table>
+  <h2>${A?'الطلبات حسب الخدمة':'Orders by Service'}</h2>
+  <table><tr><th>${A?'الخدمة':'Service'}</th><th style="text-align:right;">${A?'العدد':'Count'}</th></tr>${svcRows||`<tr><td colspan=2>${A?'لا توجد بيانات':'No data'}</td></tr>`}</table>
+  <h2>${A?'الإيرادات حسب طريقة الدفع':'Revenue by Payment Method'}</h2>
+  <table><tr><th>${A?'الطريقة':'Method'}</th><th style="text-align:right;">${A?'المبلغ':'Amount'}</th></tr>${payRows||`<tr><td colspan=2>${A?'لا توجد بيانات':'No data'}</td></tr>`}</table>
+  <div class="foot">Powered by Washly · ${new Date().toLocaleDateString('en-GB')}</div>
+  <script>window.onload=function(){window.print();}<\/script>
+  </body></html>`;
+  const w = window.open('', '_blank', 'width=800,height=600');
+  if (!w){ showToast(A?'اسمح بالنوافذ المنبثقة':'Allow popups to print', true); return; }
+  w.document.write(html); w.document.close();
 }
 
 async function fetchCustomers() {
