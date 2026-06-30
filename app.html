@@ -1686,9 +1686,9 @@ function renderReport() {
   const th = 'padding:8px 6px;border-bottom:1.5px solid #cdd8de;font-size:11px;text-transform:uppercase;letter-spacing:.03em;color:#54707E;';
   const totalsRow = `<tr style="font-weight:700;background:#F4F7F9;">
       <td style="padding:9px 6px;border-top:1.5px solid #cdd8de;" colspan="4">${A?'الإجمالي':'TOTAL'}</td>
-      <td style="padding:9px 6px;border-top:1.5px solid #cdd8de;text-align:right;">${totalRevenue.toFixed(0)}</td>
-      <td style="padding:9px 6px;border-top:1.5px solid #cdd8de;text-align:right;color:#1D9E75;">${collected.toFixed(0)}</td>
-      <td style="padding:9px 6px;border-top:1.5px solid #cdd8de;text-align:right;color:#B5352F;">${outstanding.toFixed(0)}</td>
+      <td style="padding:9px 6px;border-top:1.5px solid #cdd8de;text-align:right;"><span style="display:block;font-size:9px;font-weight:600;color:#54707E;text-transform:uppercase;">${A?'الإجمالي':'Total'}</span>${totalRevenue.toFixed(0)}</td>
+      <td style="padding:9px 6px;border-top:1.5px solid #cdd8de;text-align:right;color:#1D9E75;"><span style="display:block;font-size:9px;font-weight:600;color:#54707E;text-transform:uppercase;">${A?'مدفوع':'Paid'}</span>${collected.toFixed(0)}</td>
+      <td style="padding:9px 6px;border-top:1.5px solid #cdd8de;text-align:right;color:#B5352F;"><span style="display:block;font-size:9px;font-weight:600;color:#54707E;text-transform:uppercase;">${A?'متبقي':'Balance'}</span>${outstanding.toFixed(0)}</td>
       <td style="padding:9px 6px;border-top:1.5px solid #cdd8de;" colspan="2"></td>
     </tr>`;
 
@@ -1747,7 +1747,7 @@ async function printReport(){
     const leftColor = x.left>0.01 ? '#B5352F' : '#1D9E75';
     return `<tr><td>#${String(x.id).padStart(3,'0')}</td><td>${x.dateStr}</td><td>${x.name}</td><td>${x.items}</td><td style="text-align:right;">${x.total.toFixed(0)}</td><td style="text-align:right;">${x.paidAmt.toFixed(0)}</td><td style="text-align:right;color:${leftColor};font-weight:600;">${x.left.toFixed(0)}</td><td>${x.method}</td><td>${x.status}</td></tr>`;
   }).join('');
-  const totalsRow = `<tr class="totals"><td colspan="4">${A?'الإجمالي':'TOTAL'}</td><td style="text-align:right;">${r.totalRevenue.toFixed(0)}</td><td style="text-align:right;color:#1D9E75;">${r.collected.toFixed(0)}</td><td style="text-align:right;color:#B5352F;">${r.outstanding.toFixed(0)}</td><td colspan="2"></td></tr>`;
+  const totalsRow = `<tr class="totals"><td colspan="4">${A?'الإجمالي':'TOTAL'}</td><td style="text-align:right;"><span style="display:block;font-size:9px;color:#54707E;text-transform:uppercase;">${A?'الإجمالي':'Total'}</span>${r.totalRevenue.toFixed(0)}</td><td style="text-align:right;color:#1D9E75;"><span style="display:block;font-size:9px;color:#54707E;text-transform:uppercase;">${A?'مدفوع':'Paid'}</span>${r.collected.toFixed(0)}</td><td style="text-align:right;color:#B5352F;"><span style="display:block;font-size:9px;color:#54707E;text-transform:uppercase;">${A?'متبقي':'Balance'}</span>${r.outstanding.toFixed(0)}</td><td colspan="2"></td></tr>`;
   const payStrip = Object.keys(r.payTotals).map(m=>`${payLabel(m)}: <b>${r.payTotals[m].toFixed(0)}</b>`).join(' &nbsp;·&nbsp; ');
   const svcStrip = Object.keys(r.svcCounts).map(s=>`${A?AR_SERVICE[s]:s.replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase())}: <b>${r.svcCounts[s]}</b>`).join(' &nbsp;·&nbsp; ');
   const html = `<!DOCTYPE html><html dir="${A?'rtl':'ltr'}"><head><meta charset="utf-8"><title>Report</title>
