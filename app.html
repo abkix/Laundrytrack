@@ -1625,89 +1625,106 @@ function renderReport() {
     return d >= fromDate && (!toDate || d <= toDate);
   });
   const totalOrders = periodOrders.length;
-  const totalRevenue = periodOrders.reduce((s,o) => s + (parseFloat(o.price)||0), 0);
-  const paidOrders = periodOrders.filter(o => o.paid);
-  const paidRevenue = paidOrders.reduce((s,o) => s + (parseFloat(o.price)||0), 0);
-  const unpaidRevenue = totalRevenue - paidRevenue;
-  const urgentCount = periodOrders.filter(o => o.priority==='urgent').length;
   const A = lang==='ar';
+
+  // money (deposit-aware)
+  let totalRevenue=0, collected=0;
+  periodOrders.forEach(o=>{
+    const total=parseFloat(o.price)||0;
+    const paidAmt=o.paid ? total : (parseFloat(o.amount_paid)||0);
+    totalRevenue+=total; collected+=paidAmt;
+  });
+  const outstanding = totalRevenue - collected;
+  const urgentCount = periodOrders.filter(o => o.priority==='urgent').length;
 
   // count per service type
   const svcCounts = {};
   periodOrders.forEach(o => { svcCounts[o.service] = (svcCounts[o.service]||0)+1; });
-  const svcRows = Object.keys(svcCounts).map(s => {
-    const label = A ? AR_SERVICE[s] : s.replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase());
-    return `<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:0.5px solid #eee;font-size:13px;"><span>${label}</span><span style="font-weight:500;">${svcCounts[s]}</span></div>`;
-  }).join('');
 
-  // revenue per payment method (paid orders only); split cash_card into its parts
+  // collected money per payment method (split cash_card)
   const payTotals = {};
-  paidOrders.forEach(o => {
-    const price = parseFloat(o.price)||0;
+  periodOrders.forEach(o => {
+    const total = parseFloat(o.price)||0;
     if (o.payment_method==='cash_card'){
       payTotals['cash'] = (payTotals['cash']||0) + (parseFloat(o.paid_cash)||0);
       payTotals['card'] = (payTotals['card']||0) + (parseFloat(o.paid_card)||0);
-    } else {
-      const m = o.payment_method || 'unknown';
-      payTotals[m] = (payTotals[m]||0) + price;
+    } else if (o.payment_method){
+      const paidAmt = o.paid ? total : (parseFloat(o.amount_paid)||0);
+      payTotals[o.payment_method] = (payTotals[o.payment_method]||0) + paidAmt;
     }
   });
-  const payRows = Object.keys(payTotals).map(m => {
-    const label = m==='unknown' ? (A?'غير محدد':'Unspecified') : payLabel(m);
-    return `<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:0.5px solid #eee;font-size:13px;"><span>${label}</span><span style="font-weight:500;">${payTotals[m].toFixed(0)} QAR</span></div>`;
-  }).join('');
 
-  // per-order rows
-  const orderRows = periodOrders.map(o => {
+  // master order rows
+  const rowsData = periodOrders.map(o=>{
     const total = parseFloat(o.price)||0;
     const paidAmt = o.paid ? total : (parseFloat(o.amount_paid)||0);
     const left = total - paidAmt;
-    const method = o.payment_method ? payLabel(o.payment_method) : (A?'—':'—');
-    const leftColor = left>0.01 ? '#B5352F' : '#1D9E75';
+    const pipe = getPipeline(o.service, o.collection);
+    const status = statusLabel(pipe[o.status_idx]||'');
+    const d = new Date(o.created_at);
+    const dateStr = isNaN(d) ? '' : ('0'+d.getDate()).slice(-2)+'/'+('0'+(d.getMonth()+1)).slice(-2);
+    const method = o.payment_method ? payLabel(o.payment_method) : '—';
+    return { id:o.id, dateStr, name:o.customer_name, items:o.items||'', total, paidAmt, left, method, status };
+  });
+
+  const td = 'padding:7px 6px;border-bottom:0.5px solid #eee;';
+  const orderRows = rowsData.map(r=>{
+    const leftColor = r.left>0.01 ? '#B5352F' : '#1D9E75';
     return `<tr>
-      <td style="padding:6px 4px;border-bottom:0.5px solid #eee;">#${String(o.id).padStart(3,'0')}</td>
-      <td style="padding:6px 4px;border-bottom:0.5px solid #eee;">${o.customer_name}</td>
-      <td style="padding:6px 4px;border-bottom:0.5px solid #eee;">${total.toFixed(0)}</td>
-      <td style="padding:6px 4px;border-bottom:0.5px solid #eee;">${paidAmt.toFixed(0)}</td>
-      <td style="padding:6px 4px;border-bottom:0.5px solid #eee;color:${leftColor};font-weight:600;">${left.toFixed(0)}</td>
-      <td style="padding:6px 4px;border-bottom:0.5px solid #eee;">${method}</td>
+      <td style="${td}">#${String(r.id).padStart(3,'0')}</td>
+      <td style="${td}white-space:nowrap;">${r.dateStr}</td>
+      <td style="${td}">${r.name}</td>
+      <td style="${td}max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${r.items}</td>
+      <td style="${td}text-align:right;">${r.total.toFixed(0)}</td>
+      <td style="${td}text-align:right;">${r.paidAmt.toFixed(0)}</td>
+      <td style="${td}text-align:right;color:${leftColor};font-weight:600;">${r.left.toFixed(0)}</td>
+      <td style="${td}">${r.method}</td>
+      <td style="${td}">${r.status}</td>
     </tr>`;
   }).join('');
 
+  const th = 'padding:8px 6px;border-bottom:1.5px solid #cdd8de;font-size:11px;text-transform:uppercase;letter-spacing:.03em;color:#54707E;';
+  const totalsRow = `<tr style="font-weight:700;background:#F4F7F9;">
+      <td style="padding:9px 6px;border-top:1.5px solid #cdd8de;" colspan="4">${A?'الإجمالي':'TOTAL'}</td>
+      <td style="padding:9px 6px;border-top:1.5px solid #cdd8de;text-align:right;">${totalRevenue.toFixed(0)}</td>
+      <td style="padding:9px 6px;border-top:1.5px solid #cdd8de;text-align:right;color:#1D9E75;">${collected.toFixed(0)}</td>
+      <td style="padding:9px 6px;border-top:1.5px solid #cdd8de;text-align:right;color:#B5352F;">${outstanding.toFixed(0)}</td>
+      <td style="padding:9px 6px;border-top:1.5px solid #cdd8de;" colspan="2"></td>
+    </tr>`;
+
+  const payStrip = Object.keys(payTotals).map(m=>`<span style="display:inline-block;background:#EEF4F8;color:#1F5E8C;border-radius:6px;padding:3px 9px;font-size:12px;margin:2px 4px 2px 0;">${payLabel(m)}: <b>${payTotals[m].toFixed(0)}</b></span>`).join('');
+  const svcStrip = Object.keys(svcCounts).map(s=>`<span style="display:inline-block;background:#F2F4F2;color:#42595B;border-radius:6px;padding:3px 9px;font-size:12px;margin:2px 4px 2px 0;">${A?AR_SERVICE[s]:s.replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase())}: <b>${svcCounts[s]}</b></span>`).join('');
+
   document.getElementById('report-content').innerHTML = `
     <div class="metrics" style="padding:0;background:transparent;border:none;grid-template-columns:repeat(2,1fr);">
-      <div class="metric"><div class="metric-label">${A?'إجمالي الطلبات':'Total Orders'}</div><div class="metric-value">${totalOrders}</div></div>
-      <div class="metric"><div class="metric-label">${A?'إجمالي الإيرادات':'Total Revenue'}</div><div class="metric-value green">${totalRevenue.toFixed(0)} QAR</div></div>
-      <div class="metric"><div class="metric-label">${A?'المدفوع':'Paid'}</div><div class="metric-value green">${paidRevenue.toFixed(0)} QAR</div></div>
-      <div class="metric"><div class="metric-label">${A?'غير المدفوع':'Unpaid'}</div><div class="metric-value amber">${unpaidRevenue.toFixed(0)} QAR</div></div>
+      <div class="metric"><div class="metric-label">${A?'إجمالي الإيرادات':'Total Revenue'}</div><div class="metric-value">${totalRevenue.toFixed(0)} QAR</div></div>
+      <div class="metric"><div class="metric-label">${A?'المُحصّل':'Collected'}</div><div class="metric-value green">${collected.toFixed(0)} QAR</div></div>
+      <div class="metric"><div class="metric-label">${A?'المتبقي (ديون)':'Outstanding'}</div><div class="metric-value amber">${outstanding.toFixed(0)} QAR</div></div>
+      <div class="metric"><div class="metric-label">${A?'عدد الطلبات':'Orders'}</div><div class="metric-value">${totalOrders}${urgentCount?` <span style="font-size:12px;color:var(--amber);">· ${urgentCount} ${A?'عاجل':'urgent'}</span>`:''}</div></div>
     </div>
-    <div style="background:#fff;border:0.5px solid #e0e0de;border-radius:12px;padding:1rem 1.25rem;margin-top:8px;">
-      <div style="font-size:13px;font-weight:600;margin-bottom:8px;">${A?'الطلبات حسب الخدمة':'Orders by Service'}</div>
-      ${svcRows || `<div style="font-size:13px;color:#888;">${A?'لا توجد بيانات':'No data'}</div>`}
-    </div>
-    <div style="background:#fff;border:0.5px solid #e0e0de;border-radius:12px;padding:1rem 1.25rem;margin-top:8px;">
-      <div style="font-size:13px;font-weight:600;margin-bottom:8px;">${A?'الإيرادات حسب طريقة الدفع':'Revenue by Payment Method'}</div>
-      ${payRows || `<div style="font-size:13px;color:#888;">${A?'لا توجد بيانات':'No data'}</div>`}
-    </div>
-    <div style="background:#fff;border:0.5px solid #e0e0de;border-radius:12px;padding:1rem 1.25rem;margin-top:8px;overflow-x:auto;">
-      <div style="font-size:13px;font-weight:600;margin-bottom:8px;">${A?'تفاصيل الطلبات':'Order Details'}</div>
-      <table style="width:100%;border-collapse:collapse;font-size:12.5px;min-width:560px;">
-        <tr style="text-align:${A?'right':'left'};color:#54707E;">
-          <th style="padding:6px 4px;border-bottom:1px solid #e0e0de;">#</th>
-          <th style="padding:6px 4px;border-bottom:1px solid #e0e0de;">${A?'العميل':'Customer'}</th>
-          <th style="padding:6px 4px;border-bottom:1px solid #e0e0de;">${A?'الإجمالي':'Total'}</th>
-          <th style="padding:6px 4px;border-bottom:1px solid #e0e0de;">${A?'مدفوع':'Paid'}</th>
-          <th style="padding:6px 4px;border-bottom:1px solid #e0e0de;">${A?'باقي':'Left'}</th>
-          <th style="padding:6px 4px;border-bottom:1px solid #e0e0de;">${A?'الطريقة':'Method'}</th>
+    <div style="margin-top:10px;">${payStrip}${svcStrip}</div>
+    <div style="background:#fff;border:0.5px solid #e0e0de;border-radius:12px;padding:0.75rem 1rem 1rem;margin-top:10px;overflow-x:auto;">
+      <table style="width:100%;border-collapse:collapse;font-size:12.5px;min-width:680px;">
+        <tr style="text-align:${A?'right':'left'};">
+          <th style="${th}">#</th>
+          <th style="${th}">${A?'التاريخ':'Date'}</th>
+          <th style="${th}">${A?'العميل':'Customer'}</th>
+          <th style="${th}">${A?'الأصناف':'Items'}</th>
+          <th style="${th}text-align:right;">${A?'الإجمالي':'Total'}</th>
+          <th style="${th}text-align:right;">${A?'مدفوع':'Paid'}</th>
+          <th style="${th}text-align:right;">${A?'المتبقي':'Balance'}</th>
+          <th style="${th}">${A?'الطريقة':'Method'}</th>
+          <th style="${th}">${A?'الحالة':'Status'}</th>
         </tr>
-        ${orderRows || `<tr><td colspan="6" style="padding:10px;color:#888;text-align:center;">${A?'لا توجد طلبات':'No orders'}</td></tr>`}
+        ${orderRows || `<tr><td colspan="9" style="padding:14px;color:#888;text-align:center;">${A?'لا توجد طلبات':'No orders'}</td></tr>`}
+        ${orderRows ? totalsRow : ''}
       </table>
     </div>`;
 
   // stash for printing
   lastReport = {
-    fromDate, toDate, totalOrders, totalRevenue, paidRevenue, unpaidRevenue, urgentCount,
-    svcCounts, payTotals, periodOrders
+    fromDate, toDate, totalOrders, totalRevenue, collected, outstanding, urgentCount,
+    svcCounts, payTotals, rowsData
   };
 }
 
@@ -1726,53 +1743,54 @@ async function printReport(){
   const A = lang==='ar';
   const r = lastReport;
   const laundryName = await getLaundryName();
-  const svcRows = Object.keys(r.svcCounts).map(s=>{
-    const label = A?AR_SERVICE[s]:s.replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase());
-    return `<tr><td>${label}</td><td style="text-align:right;">${r.svcCounts[s]}</td></tr>`;
+  const orderRows = (r.rowsData||[]).map(x=>{
+    const leftColor = x.left>0.01 ? '#B5352F' : '#1D9E75';
+    return `<tr><td>#${String(x.id).padStart(3,'0')}</td><td>${x.dateStr}</td><td>${x.name}</td><td>${x.items}</td><td style="text-align:right;">${x.total.toFixed(0)}</td><td style="text-align:right;">${x.paidAmt.toFixed(0)}</td><td style="text-align:right;color:${leftColor};font-weight:600;">${x.left.toFixed(0)}</td><td>${x.method}</td><td>${x.status}</td></tr>`;
   }).join('');
-  const payRows = Object.keys(r.payTotals).map(m=>{
-    const label = m==='unknown'?(A?'غير محدد':'Unspecified'):payLabel(m);
-    return `<tr><td>${label}</td><td style="text-align:right;">${r.payTotals[m].toFixed(0)} QAR</td></tr>`;
-  }).join('');
-  const orderRows = (r.periodOrders||[]).map(o=>{
-    const total = parseFloat(o.price)||0;
-    const paidAmt = o.paid ? total : (parseFloat(o.amount_paid)||0);
-    const left = total - paidAmt;
-    const method = o.payment_method ? payLabel(o.payment_method) : '—';
-    return `<tr><td>#${String(o.id).padStart(3,'0')}</td><td>${o.customer_name}</td><td style="text-align:right;">${total.toFixed(0)}</td><td style="text-align:right;">${paidAmt.toFixed(0)}</td><td style="text-align:right;">${left.toFixed(0)}</td><td>${method}</td></tr>`;
-  }).join('');
+  const totalsRow = `<tr class="totals"><td colspan="4">${A?'الإجمالي':'TOTAL'}</td><td style="text-align:right;">${r.totalRevenue.toFixed(0)}</td><td style="text-align:right;color:#1D9E75;">${r.collected.toFixed(0)}</td><td style="text-align:right;color:#B5352F;">${r.outstanding.toFixed(0)}</td><td colspan="2"></td></tr>`;
+  const payStrip = Object.keys(r.payTotals).map(m=>`${payLabel(m)}: <b>${r.payTotals[m].toFixed(0)}</b>`).join(' &nbsp;·&nbsp; ');
+  const svcStrip = Object.keys(r.svcCounts).map(s=>`${A?AR_SERVICE[s]:s.replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase())}: <b>${r.svcCounts[s]}</b>`).join(' &nbsp;·&nbsp; ');
   const html = `<!DOCTYPE html><html dir="${A?'rtl':'ltr'}"><head><meta charset="utf-8"><title>Report</title>
   <style>
-    body{font-family:Arial,sans-serif;max-width:700px;margin:24px auto;color:#0C2A3A;padding:0 16px;}
-    h1{font-size:20px;margin:0 0 4px;}
-    .sub{color:#666;font-size:13px;margin-bottom:18px;}
-    table{width:100%;border-collapse:collapse;margin-bottom:20px;font-size:14px;}
-    th,td{padding:8px 6px;border-bottom:1px solid #e0e0de;text-align:${A?'right':'left'};}
-    th{background:#F4F7F9;font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:#54707E;}
-    .summary td{font-size:15px;}
-    .summary td:last-child{text-align:right;font-weight:700;}
-    h2{font-size:14px;margin:18px 0 6px;color:#1F5E8C;}
-    .foot{text-align:center;color:#999;font-size:11px;margin-top:24px;}
+    *{box-sizing:border-box;}
+    body{font-family:Arial,sans-serif;max-width:1000px;margin:24px auto;color:#0C2A3A;padding:0 16px;}
+    h1{font-size:22px;margin:0 0 4px;}
+    .sub{color:#666;font-size:13px;margin-bottom:16px;}
+    .kpis{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;}
+    .kpi{flex:1;min-width:130px;border:1px solid #e0e0de;border-radius:10px;padding:10px 12px;}
+    .kpi .l{font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:#54707E;}
+    .kpi .v{font-size:20px;font-weight:700;margin-top:2px;}
+    .kpi .v.green{color:#1D9E75;} .kpi .v.amber{color:#C8841C;}
+    .strip{font-size:12.5px;color:#42595B;margin-bottom:14px;}
+    table{width:100%;border-collapse:collapse;font-size:12.5px;}
+    th,td{padding:7px 6px;border-bottom:1px solid #eee;text-align:${A?'right':'left'};}
+    th{background:#F4F7F9;font-size:10.5px;text-transform:uppercase;letter-spacing:.03em;color:#54707E;border-bottom:1.5px solid #cdd8de;}
+    tr.totals td{font-weight:700;background:#F4F7F9;border-top:1.5px solid #cdd8de;border-bottom:none;}
+    .foot{text-align:center;color:#999;font-size:11px;margin-top:22px;}
+    @media print{ body{margin:0;} }
   </style></head><body>
   <h1>${laundryName}</h1>
   <div class="sub">${A?'تقرير':'Report'} · ${reportRangeLabel()}</div>
-  <table class="summary">
-    <tr><td>${A?'إجمالي الطلبات':'Total Orders'}</td><td>${r.totalOrders}</td></tr>
-    <tr><td>${A?'إجمالي الإيرادات':'Total Revenue'}</td><td>${r.totalRevenue.toFixed(0)} QAR</td></tr>
-    <tr><td>${A?'المدفوع':'Paid'}</td><td>${r.paidRevenue.toFixed(0)} QAR</td></tr>
-    <tr><td>${A?'غير المدفوع':'Unpaid'}</td><td>${r.unpaidRevenue.toFixed(0)} QAR</td></tr>
-    <tr><td>${A?'عاجل':'Urgent Orders'}</td><td>${r.urgentCount}</td></tr>
+  <div class="kpis">
+    <div class="kpi"><div class="l">${A?'إجمالي الإيرادات':'Total Revenue'}</div><div class="v">${r.totalRevenue.toFixed(0)} QAR</div></div>
+    <div class="kpi"><div class="l">${A?'المُحصّل':'Collected'}</div><div class="v green">${r.collected.toFixed(0)} QAR</div></div>
+    <div class="kpi"><div class="l">${A?'المتبقي (ديون)':'Outstanding'}</div><div class="v amber">${r.outstanding.toFixed(0)} QAR</div></div>
+    <div class="kpi"><div class="l">${A?'عدد الطلبات':'Orders'}</div><div class="v">${r.totalOrders}</div></div>
+  </div>
+  <div class="strip">${payStrip}${payStrip&&svcStrip?' &nbsp;|&nbsp; ':''}${svcStrip}</div>
+  <table>
+    <tr>
+      <th>#</th><th>${A?'التاريخ':'Date'}</th><th>${A?'العميل':'Customer'}</th><th>${A?'الأصناف':'Items'}</th>
+      <th style="text-align:right;">${A?'الإجمالي':'Total'}</th><th style="text-align:right;">${A?'مدفوع':'Paid'}</th>
+      <th style="text-align:right;">${A?'المتبقي':'Balance'}</th><th>${A?'الطريقة':'Method'}</th><th>${A?'الحالة':'Status'}</th>
+    </tr>
+    ${orderRows||`<tr><td colspan=9 style="text-align:center;color:#888;padding:14px;">${A?'لا توجد طلبات':'No orders'}</td></tr>`}
+    ${orderRows?totalsRow:''}
   </table>
-  <h2>${A?'الطلبات حسب الخدمة':'Orders by Service'}</h2>
-  <table><tr><th>${A?'الخدمة':'Service'}</th><th style="text-align:right;">${A?'العدد':'Count'}</th></tr>${svcRows||`<tr><td colspan=2>${A?'لا توجد بيانات':'No data'}</td></tr>`}</table>
-  <h2>${A?'الإيرادات حسب طريقة الدفع':'Revenue by Payment Method'}</h2>
-  <table><tr><th>${A?'الطريقة':'Method'}</th><th style="text-align:right;">${A?'المبلغ':'Amount'}</th></tr>${payRows||`<tr><td colspan=2>${A?'لا توجد بيانات':'No data'}</td></tr>`}</table>
-  <h2>${A?'تفاصيل الطلبات':'Order Details'}</h2>
-  <table><tr><th>#</th><th>${A?'العميل':'Customer'}</th><th style="text-align:right;">${A?'الإجمالي':'Total'}</th><th style="text-align:right;">${A?'مدفوع':'Paid'}</th><th style="text-align:right;">${A?'باقي':'Left'}</th><th>${A?'الطريقة':'Method'}</th></tr>${orderRows||`<tr><td colspan=6>${A?'لا توجد طلبات':'No orders'}</td></tr>`}</table>
   <div class="foot">Powered by Washly · ${new Date().toLocaleDateString('en-GB')}</div>
   <script>window.onload=function(){window.print();}<\/script>
   </body></html>`;
-  const w = window.open('', '_blank', 'width=800,height=600');
+  const w = window.open('', '_blank', 'width=900,height=650');
   if (!w){ showToast(A?'اسمح بالنوافذ المنبثقة':'Allow popups to print', true); return; }
   w.document.write(html); w.document.close();
 }
