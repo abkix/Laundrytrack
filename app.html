@@ -182,6 +182,11 @@ button{font-family:var(--body);}
 .item-remove:hover{color:var(--red);}
 .add-item-btn{width:100%;padding:9px;font-size:12.5px;font-weight:600;border:1px dashed var(--brand);border-radius:9px;background:transparent;color:var(--brand);cursor:pointer;margin-top:5px;transition:.15s;}
 .add-item-btn:hover{background:#EEF4F8;}
+.item-block{margin-bottom:8px;}
+.item-finish{display:flex;gap:5px;flex-wrap:wrap;padding:5px 0 2px 2px;}
+.finish-chip{font-size:11px;padding:3px 9px;border:1px solid var(--line);border-radius:999px;background:#fff;color:var(--ink-3);cursor:pointer;transition:.15s;font-weight:500;user-select:none;white-space:nowrap;}
+.finish-chip:hover{border-color:var(--brand);color:var(--brand);}
+.finish-chip.on{background:#EEF4F8;border-color:var(--brand);color:var(--brand-d);font-weight:600;}
 input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0;}
 input[type=number]{-moz-appearance:textfield;appearance:textfield;}
 
@@ -768,18 +773,28 @@ function addItemRow(selectedItem='Thobe', qty=1) {
     ).join('');
     return `<optgroup label="${groupLabel}">${options}</optgroup>`;
   }).join('');
+  const A = lang==='ar';
+  const chips = [
+    ['starch', A?'نشا':'Starch'],
+    ['whitener', A?'تبييض':'Whitener'],
+    ['fold', A?'طي':'Fold'],
+    ['hanger', A?'علاقة':'Hanger'],
+  ].map(([f,label]) => `<span class="finish-chip" data-f="${f}" onclick="toggleFinish(this,'${id}')">${label}</span>`).join('');
   const div = document.createElement('div');
-  div.className = 'item-row';
+  div.className = 'item-block';
   div.id = id;
   div.innerHTML = `
-    <select onchange="calcOrderTotal()">${optgroups}</select>
-    <div class="item-qty">
-      <button type="button" class="qty-btn" onclick="changeQty('${id}',-1)">−</button>
-      <span class="qty-num">${qty}</span>
-      <button type="button" class="qty-btn" onclick="changeQty('${id}',1)">+</button>
+    <div class="item-row">
+      <select onchange="calcOrderTotal()">${optgroups}</select>
+      <div class="item-qty">
+        <button type="button" class="qty-btn" onclick="changeQty('${id}',-1)">−</button>
+        <span class="qty-num">${qty}</span>
+        <button type="button" class="qty-btn" onclick="changeQty('${id}',1)">+</button>
+      </div>
+      <button type="button" class="item-urgent" onclick="toggleItemUrgent('${id}')" title="Urgent"><svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M13 2L4 14h6l-1 8 9-12h-6z"/></svg></button>
+      <button type="button" class="item-remove" onclick="removeItemRow('${id}')">✕</button>
     </div>
-    <button type="button" class="item-urgent" onclick="toggleItemUrgent('${id}')" title="Urgent"><svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M13 2L4 14h6l-1 8 9-12h-6z"/></svg></button>
-    <button type="button" class="item-remove" onclick="removeItemRow('${id}')">✕</button>
+    <div class="item-finish">${chips}</div>
   `;
   list.appendChild(div);
   calcOrderTotal();
@@ -798,20 +813,39 @@ function toggleItemUrgent(id) {
   calcOrderTotal();
 }
 
+function toggleFinish(el, id){
+  const f = el.dataset.f;
+  if (f==='fold' || f==='hanger'){
+    const block = document.getElementById(id);
+    const isOn = el.classList.contains('on');
+    block.querySelector('[data-f="fold"]').classList.remove('on');
+    block.querySelector('[data-f="hanger"]').classList.remove('on');
+    if (!isOn) el.classList.add('on');
+  } else {
+    el.classList.toggle('on');
+  }
+}
+
 function removeItemRow(id) {
   const row = document.getElementById(id);
   if (row) row.remove();
   calcOrderTotal();
 }
 
+const FINISH_LABELS = { starch:{en:'starch',ar:'نشا'}, whitener:{en:'whitener',ar:'تبييض'}, fold:{en:'fold',ar:'طي'}, hanger:{en:'hanger',ar:'علاقة'} };
 function getItemsString() {
-  const rows = document.querySelectorAll('#items-list .item-row');
-  if (!rows.length) return '';
-  return Array.from(rows).map(row => {
-    const item = row.querySelector('select').value;
-    const qty = row.querySelector('.qty-num').textContent;
-    const urgent = row.querySelector('.item-urgent').classList.contains('on');
-    return `${qty}x ${item}${urgent?' • '+(lang==='ar'?'مستعجل':'urgent'):''}`;
+  const blocks = document.querySelectorAll('#items-list .item-block');
+  if (!blocks.length) return '';
+  return Array.from(blocks).map(block => {
+    const item = block.querySelector('select').value;
+    const qty = block.querySelector('.qty-num').textContent;
+    const urgent = block.querySelector('.item-urgent').classList.contains('on');
+    const fin = Array.from(block.querySelectorAll('.finish-chip.on'))
+      .map(c => lang==='ar'?FINISH_LABELS[c.dataset.f].ar:FINISH_LABELS[c.dataset.f].en);
+    let s = `${qty}x ${item}`;
+    if (fin.length) s += ` · ${fin.join(' · ')}`;
+    if (urgent) s += ' • ' + (lang==='ar'?'مستعجل':'urgent');
+    return s;
   }).join(', ');
 }
 
@@ -1592,7 +1626,7 @@ async function savePrices(){
 }
 
 function calcOrderTotal(){
-  const rows = document.querySelectorAll('#items-list .item-row');
+  const rows = document.querySelectorAll('#items-list .item-block');
   const service = document.getElementById('f-type').value;
   const orderUrgent = document.getElementById('f-priority').value === 'urgent';
   let total = 0;
