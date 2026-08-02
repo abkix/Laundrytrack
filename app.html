@@ -791,7 +791,7 @@ function addItemRow(selectedItem='Thobe', qty=1) {
   const optgroups = getVisibleGroups().map(g => {
     const groupLabel = lang==='ar' ? g.labelAr : g.label;
     const options = g.items.map(i =>
-      `<option value="${i.en}" ${i.en===selectedItem?'selected':''}>${codes.indexOf(i.en)+1}. ${i.en} / ${i.ar}</option>`
+      `<option value="${i.en}" ${i.en===selectedItem?'selected':''}>${i.en} / ${i.ar}</option>`
     ).join('');
     return `<optgroup label="${groupLabel}">${options}</optgroup>`;
   }).join('');
