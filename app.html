@@ -877,7 +877,7 @@ function renderOrders(){
   const list=document.getElementById('orders-list');
   const filtered=orders.filter(o=>{
     const pipe=getPipeline(o.service,o.collection);
-    return (activeFilter==='all'||pipe[o.status_idx]===activeFilter)&&(!q||o.customer_name.toLowerCase().includes(q)||String(o.id).includes(q));
+    return (activeFilter==='all'||pipe[o.status_idx]===activeFilter)&&(!q||o.customer_name.toLowerCase().includes(q)||String(o.id).includes(q)||(o.invoice_no&&String(o.invoice_no).includes(q.replace(/^inv-?0*/i,''))));
   });
   if(!filtered.length){list.innerHTML=`<div class="loading-state">${lang==='ar'?'لا توجد طلبات':'No orders yet — add your first one!'}</div>`;return;}
 
@@ -920,10 +920,10 @@ function renderOrders(){
         paidClass='unpaid';
       }
       html += `<div class="order-card${o.priority==='urgent'?' urgent':''}">
-        <div class="order-num">#${String(o.id).padStart(3,'0')}</div>
+        <div class="order-num">${o.invoice_no?'INV-'+String(o.invoice_no).padStart(4,'0'):'#'+String(o.id).padStart(3,'0')}</div>
         <div class="order-body">
           <div><div class="order-name">${o.customer_name}</div>
-          <div class="order-meta"><span>${o.items}</span> · <span>${svcLabel}</span> · <span>${colLabel}</span> · <span>${o.order_time}</span>${o.price?` · <span style='color:#27AE60;font-weight:600;'>${o.price} QAR</span>`:''}${(parseFloat(o.discount)||0)>0?` · <span style='color:#C2791A;'>-${o.discount} ${lang==='ar'?'خصم':'disc'}</span>`:''}${o.delivery_date?` · <span style='color:#2E7FB8;'>🚚 ${new Date(o.delivery_date).toLocaleDateString('en-GB')}</span>`:''}${o.invoice_no?` · <span style='color:#8AA1AC;'>INV-${String(o.invoice_no).padStart(4,'0')}</span>`:''}${o.invoice_ref?` · <span style='color:#2E7FB8;font-weight:500;'>Ref: ${o.invoice_ref}</span>`:''}${o.priority==='urgent'?` <span class="urgent-badge">${lang==='ar'?'عاجل':'URGENT'}</span>`:''}</div></div>
+          <div class="order-meta"><span>${o.items}</span> · <span>${svcLabel}</span> · <span>${colLabel}</span> · <span>${o.order_time}</span>${o.price?` · <span style='color:#27AE60;font-weight:600;'>${o.price} QAR</span>`:''}${(parseFloat(o.discount)||0)>0?` · <span style='color:#C2791A;'>-${o.discount} ${lang==='ar'?'خصم':'disc'}</span>`:''}${o.delivery_date?` · <span style='color:#2E7FB8;'>🚚 ${new Date(o.delivery_date).toLocaleDateString('en-GB')}</span>`:''}${o.invoice_ref?` · <span style='color:#2E7FB8;font-weight:500;'>Ref: ${o.invoice_ref}</span>`:''}${o.priority==='urgent'?` <span class="urgent-badge">${lang==='ar'?'عاجل':'URGENT'}</span>`:''}</div></div>
           <div class="order-row2"><div class="status-steps">${stepsHtml}</div>
           <div class="order-actions">
             <button class="print-btn" onclick="printTags(${o.id})">${lang==='ar'?'ملصقات':'Tags'}</button>
@@ -966,8 +966,7 @@ async function printReceipt(id){
   <div class="center">${A?'إيصال طلب':'Order Receipt'}</div>
   <div class="line"></div>
   <table>
-    <tr><td>${A?'رقم الطلب':'Order'}</td><td class="right">#${String(o.id).padStart(3,'0')}</td></tr>
-    ${o.invoice_no?`<tr><td>${A?'فاتورة':'Invoice'}</td><td class="right">INV-${String(o.invoice_no).padStart(4,'0')}</td></tr>`:''}
+    <tr><td>${A?'رقم الطلب':'Order'}</td><td class="right">${o.invoice_no?'INV-'+String(o.invoice_no).padStart(4,'0'):'#'+String(o.id).padStart(3,'0')}</td></tr>
     ${o.invoice_ref?`<tr><td>${A?'مرجع':'Ref'}</td><td class="right">${o.invoice_ref}</td></tr>`:''}
     <tr><td>${A?'التاريخ':'Date'}</td><td class="right">${dateStr}</td></tr>
     ${o.delivery_date?`<tr><td>${A?'تاريخ التوصيل':'Delivery'}</td><td class="right">${new Date(o.delivery_date).toLocaleDateString('en-GB')}</td></tr>`:''}
@@ -1010,7 +1009,7 @@ async function printTags(id){
   const dateStr = (o.created_at ? new Date(o.created_at) : new Date()).toLocaleDateString('en-GB');
   const tags = parts.map(it=>`
     <div class="tag">
-      <div class="t-top"><b>#${String(o.id).padStart(3,'0')}</b>${o.invoice_no?` · INV-${String(o.invoice_no).padStart(4,'0')}`:''}</div>
+      <div class="t-top"><b>${o.invoice_no?'INV-'+String(o.invoice_no).padStart(4,'0'):'#'+String(o.id).padStart(3,'0')}</b></div>
       <div class="t-name">${o.customer_name}</div>
       <div class="t-item">${it}</div>
       <div class="t-bot">${dateStr}${o.delivery_date?` · 🚚 ${new Date(o.delivery_date).toLocaleDateString('en-GB')}`:''} · ${laundryName}</div>
@@ -1766,14 +1765,14 @@ function renderReport() {
     const d = new Date(o.created_at);
     const dateStr = isNaN(d) ? '' : ('0'+d.getDate()).slice(-2)+'/'+('0'+(d.getMonth()+1)).slice(-2);
     const method = o.payment_method ? payLabel(o.payment_method) : '—';
-    return { id:o.id, dateStr, name:o.customer_name, items:o.items||'', total, paidAmt, left, method, status };
+    return { id:o.id, num:(o.invoice_no?'INV-'+String(o.invoice_no).padStart(4,'0'):'#'+String(o.id).padStart(3,'0')), dateStr, name:o.customer_name, items:o.items||'', total, paidAmt, left, method, status };
   });
 
   const td = 'padding:7px 6px;border-bottom:0.5px solid #eee;';
   const orderRows = rowsData.map(r=>{
     const leftColor = r.left>0.01 ? '#B5352F' : '#1D9E75';
     return `<tr>
-      <td style="${td}">#${String(r.id).padStart(3,'0')}</td>
+      <td style="${td}">${r.num}</td>
       <td style="${td}white-space:nowrap;">${r.dateStr}</td>
       <td style="${td}">${r.name}</td>
       <td style="${td}max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${r.items}</td>
@@ -1847,7 +1846,7 @@ async function printReport(){
   const laundryName = await getLaundryName();
   const orderRows = (r.rowsData||[]).map(x=>{
     const leftColor = x.left>0.01 ? '#B5352F' : '#1D9E75';
-    return `<tr><td>#${String(x.id).padStart(3,'0')}</td><td>${x.dateStr}</td><td>${x.name}</td><td>${x.items}</td><td style="text-align:right;">${x.total.toFixed(0)}</td><td style="text-align:right;">${x.paidAmt.toFixed(0)}</td><td style="text-align:right;color:${leftColor};font-weight:600;">${x.left.toFixed(0)}</td><td>${x.method}</td><td>${x.status}</td></tr>`;
+    return `<tr><td>${x.num}</td><td>${x.dateStr}</td><td>${x.name}</td><td>${x.items}</td><td style="text-align:right;">${x.total.toFixed(0)}</td><td style="text-align:right;">${x.paidAmt.toFixed(0)}</td><td style="text-align:right;color:${leftColor};font-weight:600;">${x.left.toFixed(0)}</td><td>${x.method}</td><td>${x.status}</td></tr>`;
   }).join('');
   const totalsRow = `<tr class="totals"><td colspan="4">${A?'الإجمالي':'TOTAL'}</td><td style="text-align:right;"><span style="display:block;font-size:9px;color:#54707E;text-transform:uppercase;">${A?'الإجمالي':'Total'}</span>${r.totalRevenue.toFixed(0)}</td><td style="text-align:right;color:#1D9E75;"><span style="display:block;font-size:9px;color:#54707E;text-transform:uppercase;">${A?'مدفوع':'Paid'}</span>${r.collected.toFixed(0)}</td><td style="text-align:right;color:#B5352F;"><span style="display:block;font-size:9px;color:#54707E;text-transform:uppercase;">${A?'متبقي':'Balance'}</span>${r.outstanding.toFixed(0)}</td><td colspan="2"></td></tr>`;
   const payStrip = Object.keys(r.payTotals).map(m=>`${payLabel(m)}: <b>${r.payTotals[m].toFixed(0)}</b>`).join(' &nbsp;·&nbsp; ');
