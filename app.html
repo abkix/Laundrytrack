@@ -1006,9 +1006,12 @@ async function printReceipt(id){
   <table><tr class="total"><td>${A?'الإجمالي':'TOTAL'}</td><td class="right">${o.price||0} QAR</td></tr></table>
   <div class="center"><span class="paid-badge">${paidStr}</span></div>
   <div class="line"></div>
+  ${o.tracking_token?`<div class="center" style="margin:6px 0;"><div id="qrcode" style="display:inline-block;"></div><div style="font-size:10px;margin-top:3px;">${A?'امسح لتتبع طلبك':'Scan to track your order'}</div></div><div class="line"></div>`:''}
   <div class="center">${A?'شكراً لتعاملكم معنا':'Thank you for your business!'}</div>
   <div class="center" style="font-size:10px;margin-top:4px;">Powered by Washly</div>
-  <script>window.onload=function(){window.print();}<\/script>
+  ${o.tracking_token?`<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"><\/script>
+  <script>window.onload=function(){try{new QRCode(document.getElementById('qrcode'),{text:'${window.location.origin}/track.html?token=${o.tracking_token}',width:100,height:100,correctLevel:QRCode.CorrectLevel.M});}catch(e){}setTimeout(function(){window.print();},400);}<\/script>`
+  :`<script>window.onload=function(){window.print();}<\/script>`}
   </body></html>`;
   const w = window.open('', '_blank', 'width=320,height=600');
   if (!w) { showToast(A?'اسمح بالنوافذ المنبثقة للطباعة':'Allow popups to print', true); return; }
