@@ -379,10 +379,20 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield;}
     </div>
     <div class="form-row">
       <label id="lbl-collection">Collection Method</label>
-      <select id="f-collection" onchange="updatePipelinePreview()">
+      <select id="f-collection" onchange="updatePipelinePreview();toggleDeliveryExtra();calcOrderTotal()">
         <option value="collect">Collect from Shop</option>
         <option value="delivery">Delivery to Customer</option>
       </select>
+    </div>
+    <div class="form-row" id="delivery-extra" style="display:none;">
+      <label id="lbl-del-date">Delivery Date</label>
+      <input type="date" id="f-del-date" style="margin-bottom:6px;">
+      <label id="lbl-del-charge">Delivery Charge (QAR)</label>
+      <input type="number" id="f-del-charge" min="0" step="0.5" placeholder="0" oninput="calcOrderTotal()">
+    </div>
+    <div class="form-row">
+      <label id="lbl-discount">Discount (QAR)</label>
+      <input type="number" id="f-discount" min="0" step="0.5" placeholder="0" oninput="calcOrderTotal()">
     </div>
     <div class="form-row">
       <label id="lbl-priority">Priority</label>
@@ -731,6 +741,11 @@ function setLang(l) {
   document.getElementById('lbl-type').textContent=A?'نوع الخدمة':'Service Type';
   document.getElementById('lbl-collection').textContent=A?'طريقة الاستلام':'Collection Method';
   document.getElementById('lbl-priority').textContent=A?'الأولوية':'Priority';
+  { const d=document.getElementById('lbl-discount'); if(d){
+    d.textContent=A?'الخصم (ريال)':'Discount (QAR)';
+    document.getElementById('lbl-del-date').textContent=A?'تاريخ التوصيل':'Delivery Date';
+    document.getElementById('lbl-del-charge').textContent=A?'رسوم التوصيل (ريال)':'Delivery Charge (QAR)';
+  } }
   document.getElementById('lbl-pipeline').textContent=A?'مراحل الطلب':'Order pipeline';
   document.getElementById('btn-cancel').textContent=A?'إلغاء':'Cancel';
   document.getElementById('btn-submit').textContent=A?'إضافة الطلب':'Add Order';
@@ -908,9 +923,10 @@ function renderOrders(){
         <div class="order-num">#${String(o.id).padStart(3,'0')}</div>
         <div class="order-body">
           <div><div class="order-name">${o.customer_name}</div>
-          <div class="order-meta"><span>${o.items}</span> · <span>${svcLabel}</span> · <span>${colLabel}</span> · <span>${o.order_time}</span>${o.price?` · <span style='color:#27AE60;font-weight:600;'>${o.price} QAR</span>`:''}${o.invoice_ref?` · <span style='color:#2E7FB8;font-weight:500;'>Ref: ${o.invoice_ref}</span>`:''}${o.priority==='urgent'?` <span class="urgent-badge">${lang==='ar'?'عاجل':'URGENT'}</span>`:''}</div></div>
+          <div class="order-meta"><span>${o.items}</span> · <span>${svcLabel}</span> · <span>${colLabel}</span> · <span>${o.order_time}</span>${o.price?` · <span style='color:#27AE60;font-weight:600;'>${o.price} QAR</span>`:''}${(parseFloat(o.discount)||0)>0?` · <span style='color:#C2791A;'>-${o.discount} ${lang==='ar'?'خصم':'disc'}</span>`:''}${o.delivery_date?` · <span style='color:#2E7FB8;'>🚚 ${new Date(o.delivery_date).toLocaleDateString('en-GB')}</span>`:''}${o.invoice_no?` · <span style='color:#8AA1AC;'>INV-${String(o.invoice_no).padStart(4,'0')}</span>`:''}${o.invoice_ref?` · <span style='color:#2E7FB8;font-weight:500;'>Ref: ${o.invoice_ref}</span>`:''}${o.priority==='urgent'?` <span class="urgent-badge">${lang==='ar'?'عاجل':'URGENT'}</span>`:''}</div></div>
           <div class="order-row2"><div class="status-steps">${stepsHtml}</div>
           <div class="order-actions">
+            <button class="print-btn" onclick="printTags(${o.id})">${lang==='ar'?'ملصقات':'Tags'}</button>
             <button class="print-btn" onclick="printReceipt(${o.id})">${lang==='ar'?'طباعة':'Print'}</button>
             <button class="paid-btn ${paidClass}" onclick="togglePaid(${o.id})">${paidLabel}</button>
             <button class="advance-btn" onclick="advanceOrder(${o.id})" ${isDone?'disabled':''}>${advLabel}</button>
@@ -951,8 +967,10 @@ async function printReceipt(id){
   <div class="line"></div>
   <table>
     <tr><td>${A?'رقم الطلب':'Order'}</td><td class="right">#${String(o.id).padStart(3,'0')}</td></tr>
+    ${o.invoice_no?`<tr><td>${A?'فاتورة':'Invoice'}</td><td class="right">INV-${String(o.invoice_no).padStart(4,'0')}</td></tr>`:''}
     ${o.invoice_ref?`<tr><td>${A?'مرجع':'Ref'}</td><td class="right">${o.invoice_ref}</td></tr>`:''}
     <tr><td>${A?'التاريخ':'Date'}</td><td class="right">${dateStr}</td></tr>
+    ${o.delivery_date?`<tr><td>${A?'تاريخ التوصيل':'Delivery'}</td><td class="right">${new Date(o.delivery_date).toLocaleDateString('en-GB')}</td></tr>`:''}
     <tr><td>${A?'العميل':'Customer'}</td><td class="right">${o.customer_name}</td></tr>
     <tr><td>${A?'الهاتف':'Phone'}</td><td class="right">${o.phone||''}</td></tr>
     <tr><td>${A?'الخدمة':'Service'}</td><td class="right">${svcLabel}</td></tr>
@@ -961,6 +979,13 @@ async function printReceipt(id){
   <div>${A?'القطع:':'Items:'}</div>
   <table>${itemLines}</table>
   <div class="line"></div>
+  ${(()=>{const disc=parseFloat(o.discount)||0,delch=parseFloat(o.delivery_charge)||0;
+    if(disc<=0&&delch<=0) return '';
+    const sub=(parseFloat(o.price)||0)+disc-delch;
+    let rows=`<tr><td>${A?'المجموع الفرعي':'Subtotal'}</td><td class="right">${sub.toFixed(1).replace(/\.0$/,'')} QAR</td></tr>`;
+    if(disc>0) rows+=`<tr><td>${A?'الخصم':'Discount'}</td><td class="right">-${disc}</td></tr>`;
+    if(delch>0) rows+=`<tr><td>${A?'رسوم التوصيل':'Delivery'}</td><td class="right">+${delch}</td></tr>`;
+    return `<table>${rows}</table>`;})()}
   <table><tr class="total"><td>${A?'الإجمالي':'TOTAL'}</td><td class="right">${o.price||0} QAR</td></tr></table>
   <div class="center"><span class="paid-badge">${paidStr}</span></div>
   <div class="line"></div>
@@ -975,6 +1000,39 @@ async function printReceipt(id){
 }
 
 let payingOrderId = null;
+
+async function printTags(id){
+  const o = orders.find(x=>x.id===id); if(!o) return;
+  const laundryName = await getLaundryName();
+  const A = lang==='ar';
+  const parts = (o.items||'').split(',').map(s=>s.trim()).filter(Boolean);
+  if(!parts.length){ showToast(A?'لا توجد قطع':'No items to tag', true); return; }
+  const dateStr = (o.created_at ? new Date(o.created_at) : new Date()).toLocaleDateString('en-GB');
+  const tags = parts.map(it=>`
+    <div class="tag">
+      <div class="t-top"><b>#${String(o.id).padStart(3,'0')}</b>${o.invoice_no?` · INV-${String(o.invoice_no).padStart(4,'0')}`:''}</div>
+      <div class="t-name">${o.customer_name}</div>
+      <div class="t-item">${it}</div>
+      <div class="t-bot">${dateStr}${o.delivery_date?` · 🚚 ${new Date(o.delivery_date).toLocaleDateString('en-GB')}`:''} · ${laundryName}</div>
+    </div>`).join('');
+  const html = `<!DOCTYPE html><html dir="${A?'rtl':'ltr'}"><head><meta charset="utf-8"><title>Tags #${o.id}</title>
+  <style>
+    @page { size: 80mm auto; margin: 3mm; }
+    body { font-family: Arial, sans-serif; width: 74mm; margin: 0 auto; color:#000; }
+    .tag { border: 1.5px dashed #000; border-radius: 4px; padding: 5px 8px; margin-bottom: 6px; page-break-inside: avoid; }
+    .t-top { font-size: 12px; }
+    .t-name { font-size: 15px; font-weight: bold; margin: 2px 0; }
+    .t-item { font-size: 13px; margin-bottom: 2px; }
+    .t-bot { font-size: 10px; color: #333; }
+  </style></head><body>
+  ${tags}
+  <script>window.onload=function(){window.print();}<\/script>
+  </body></html>`;
+  const w = window.open('', '_blank', 'width=320,height=600');
+  if (!w) { showToast(A?'اسمح بالنوافذ المنبثقة للطباعة':'Allow popups to print', true); return; }
+  w.document.write(html);
+  w.document.close();
+}
 
 function togglePaid(id){
   payingOrderId = id;
@@ -1172,12 +1230,13 @@ function openModal(){
   initPhoneLookup();
   document.getElementById('items-list').innerHTML='';
   addItemRow('Thobe',1);
+  toggleDeliveryExtra();
   updatePipelinePreview();
 }
 
 function closeModal(){
   document.getElementById('modal').classList.remove('open');
-  ['f-name','f-phone','f-price'].forEach(id=>document.getElementById(id).value='');
+  ['f-name','f-phone','f-price','f-discount','f-del-charge','f-del-date'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('items-list').innerHTML='';
 }
 
@@ -1638,7 +1697,16 @@ function calcOrderTotal(){
     if (orderUrgent || itemUrgent) line = line * (1 + urgentSurcharge/100);
     total += line;
   });
+  const isDel = document.getElementById('f-collection').value==='delivery';
+  if (isDel) total += parseFloat(document.getElementById('f-del-charge').value)||0;
+  total -= parseFloat(document.getElementById('f-discount').value)||0;
+  if (total < 0) total = 0;
   document.getElementById('f-price').value = total.toFixed(1).replace(/\.0$/,'');
+}
+
+function toggleDeliveryExtra(){
+  const isDel = document.getElementById('f-collection').value==='delivery';
+  document.getElementById('delivery-extra').style.display = isDel ? 'block' : 'none';
 }
 
 function renderReport() {
@@ -1850,12 +1918,17 @@ function renderCustomers() {
   orders.forEach(o => { const p = o.phone; orderCounts[p] = (orderCounts[p] || 0) + 1; });
   list.innerHTML = filtered.map(c => {
     const count = orderCounts[c.phone] || 0;
-    const lastOrder = orders.filter(o => o.phone === c.phone).sort((a,b) => new Date(b.created_at) - new Date(a.created_at))[0];
+    const custOrders = orders.filter(o => o.phone === c.phone);
+    const lastOrder = custOrders.sort((a,b) => new Date(b.created_at) - new Date(a.created_at))[0];
     const lastDate = lastOrder ? new Date(lastOrder.created_at).toLocaleDateString(lang==='ar'?'ar-QA':'en-GB', {day:'numeric',month:'short'}) : '—';
+    const spent = custOrders.reduce((s,o)=>s+(parseFloat(o.price)||0),0);
+    const owed = custOrders.reduce((s,o)=>{const t=parseFloat(o.price)||0;const p=o.paid?t:(parseFloat(o.amount_paid)||0);return s+(t-p);},0);
+    const owedHtml = owed>0.01 ? ` · <span style="color:#B5352F;font-weight:600;">${lang==='ar'?'عليه':'owes'} ${owed.toFixed(0)} QAR</span>` : '';
     return `<div class="customer-card">
       <div>
         <div class="customer-name">${c.name}</div>
         <div class="customer-phone">${c.phone} · ${lang==='ar'?'آخر طلب':'last order'}: ${lastDate}</div>
+        <div class="customer-phone">${lang==='ar'?'إجمالي الصرف':'total spent'}: ${spent.toFixed(0)} QAR${owedHtml}</div>
       </div>
       <div>
         <div class="customer-orders-count">${count}</div>
@@ -1904,7 +1977,12 @@ async function addOrder(){
   const now=new Date(),time=now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0');
   try{
     const price=parseFloat(document.getElementById('f-price').value)||0;
-    const saved=await saveOrder({customer_name:name,phone,items,service:document.getElementById('f-type').value,collection:document.getElementById('f-collection').value,priority:document.getElementById('f-priority').value,status_idx:0,order_time:time,price});
+    const discount=parseFloat(document.getElementById('f-discount').value)||0;
+    const collection=document.getElementById('f-collection').value;
+    const deliveryCharge=collection==='delivery'?(parseFloat(document.getElementById('f-del-charge').value)||0):0;
+    const deliveryDate=collection==='delivery'?(document.getElementById('f-del-date').value||null):null;
+    const invoiceNo=orders.reduce((m,o)=>Math.max(m,parseInt(o.invoice_no)||0),0)+1;
+    const saved=await saveOrder({customer_name:name,phone,items,service:document.getElementById('f-type').value,collection,priority:document.getElementById('f-priority').value,status_idx:0,order_time:time,price,discount,delivery_charge:deliveryCharge,delivery_date:deliveryDate,invoice_no:invoiceNo});
     orders.unshift(saved);closeModal();showToast('Order saved!',false);updateMetrics();renderOrders();
     await upsertCustomer(name, phone);
   }catch(e){showToast('Failed to save: '+e.message,true);}
