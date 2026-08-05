@@ -184,6 +184,7 @@ button{font-family:var(--body);}
 .add-item-btn:hover{background:#EEF4F8;}
 .item-block{margin-bottom:8px;}
 .item-row input.item-code{width:46px;flex:0 0 46px;padding:8px 4px;font-size:13px;font-weight:600;text-align:center;border:1px solid var(--line);border-radius:9px;background:#FbFcFd;}
+.item-row select.item-svc{flex:0 0 88px;padding:8px 5px;font-size:12px;}
 .item-row input.item-code:focus{outline:none;border-color:var(--brand);box-shadow:0 0 0 3px rgba(46,127,184,.13);background:#fff;}
 .item-finish{display:flex;gap:5px;flex-wrap:wrap;padding:5px 0 2px 2px;}
 .finish-chip{font-size:11px;padding:3px 9px;border:1px solid var(--line);border-radius:999px;background:#fff;color:var(--ink-3);cursor:pointer;transition:.15s;font-weight:500;user-select:none;white-space:nowrap;}
@@ -796,6 +797,9 @@ function addItemRow(selectedItem='Thobe', qty=1) {
     return `<optgroup label="${groupLabel}">${options}</optgroup>`;
   }).join('');
   const A = lang==='ar';
+  const ITEM_SVC = [['wash_iron',A?'غ+ك':'W&I'],['wash_only',A?'غسيل':'Wash'],['iron_only',A?'كوي':'Iron'],['dry_clean',A?'جاف':'Dry C']];
+  const orderSvc = document.getElementById('f-type').value;
+  const svcOptions = ITEM_SVC.map(([v,l])=>`<option value="${v}" ${v===orderSvc?'selected':''}>${l}</option>`).join('');
   const chips = [
     ['starch', A?'نشا':'Starch'],
     ['whitener', A?'تبييض':'Whitener'],
@@ -809,6 +813,7 @@ function addItemRow(selectedItem='Thobe', qty=1) {
     <div class="item-row">
       <input type="text" inputmode="numeric" class="item-code" placeholder="#" oninput="setItemByCode('${id}',this.value)" title="${A?'رقم القطعة':'Item code'}">
       <select onchange="calcOrderTotal()">${optgroups}</select>
+      <select class="item-svc" onchange="calcOrderTotal()" title="${A?'الخدمة':'Job'}">${svcOptions}</select>
       <div class="item-qty">
         <button type="button" class="qty-btn" onclick="changeQty('${id}',-1)">−</button>
         <span class="qty-num">${qty}</span>
@@ -855,7 +860,7 @@ function setItemByCode(id, val){
   const codes = itemCodeList();
   if (n < 1 || n > codes.length) return;
   const block = document.getElementById(id);
-  block.querySelector('select').value = codes[n-1];
+  block.querySelector('.item-row > select').value = codes[n-1];
   calcOrderTotal();
 }
 
@@ -866,16 +871,19 @@ function removeItemRow(id) {
 }
 
 const FINISH_LABELS = { starch:{en:'starch',ar:'نشا'}, whitener:{en:'whitener',ar:'تبييض'}, fold:{en:'fold',ar:'طي'}, hanger:{en:'hanger',ar:'علاقة'} };
+const JOB_LABELS = { wash_iron:{en:'W&I',ar:'غ+ك'}, wash_only:{en:'Wash',ar:'غسيل'}, iron_only:{en:'Iron',ar:'كوي'}, dry_clean:{en:'DryC',ar:'جاف'} };
 function getItemsString() {
   const blocks = document.querySelectorAll('#items-list .item-block');
   if (!blocks.length) return '';
   return Array.from(blocks).map(block => {
-    const item = block.querySelector('select').value;
+    const item = block.querySelector('.item-row > select').value;
+    const svcSel = block.querySelector('.item-svc');
     const qty = block.querySelector('.qty-num').textContent;
     const urgent = block.querySelector('.item-urgent').classList.contains('on');
     const fin = Array.from(block.querySelectorAll('.finish-chip.on'))
       .map(c => lang==='ar'?FINISH_LABELS[c.dataset.f].ar:FINISH_LABELS[c.dataset.f].en);
     let s = `${qty}x ${item}`;
+    if (svcSel) s += ` [${lang==='ar'?JOB_LABELS[svcSel.value].ar:JOB_LABELS[svcSel.value].en}]`;
     if (fin.length) s += ` · ${fin.join(' · ')}`;
     if (urgent) s += ' • ' + (lang==='ar'?'مستعجل':'urgent');
     return s;
@@ -1622,12 +1630,19 @@ async function lookupCustomerByPhone(){
   try {
     const laundryId = await getLaundryId();
     const phone = raw.startsWith('+974') ? raw : (raw.startsWith('974') ? '+'+raw : '+974'+raw);
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/customers?laundry_id=eq.${laundryId}&phone=eq.${encodeURIComponent(phone)}&select=name`, { headers: getAuthHeaders() });
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/customers?laundry_id=eq.${laundryId}&phone=eq.${encodeURIComponent(phone)}&select=name,credit_limit`, { headers: getAuthHeaders() });
     const data = await res.json();
     if (data.length && data[0].name && !nameEl.value.trim()) {
       nameEl.value = data[0].name;
       nameEl.style.background = '#EAF7EF';
       setTimeout(()=>{ nameEl.style.background=''; }, 1500);
+    }
+    if (data.length){
+      const limit = parseFloat(data[0].credit_limit)||0;
+      if (limit>0){
+        const owed = orders.filter(o=>o.phone===phone).reduce((s,o)=>{const t=parseFloat(o.price)||0;const p=o.paid?t:(parseFloat(o.amount_paid)||0);return s+(t-p);},0);
+        if (owed>=limit) showToast((lang==='ar'?'تنبيه: العميل تجاوز حد الائتمان — عليه ':'Warning: customer over credit limit — owes ')+owed.toFixed(0)+' QAR', true);
+      }
     }
   } catch(e){ console.log('lookup failed', e); }
 }
@@ -1713,10 +1728,11 @@ function calcOrderTotal(){
   const orderUrgent = document.getElementById('f-priority').value === 'urgent';
   let total = 0;
   rows.forEach(row => {
-    const item = row.querySelector('select').value;
+    const item = row.querySelector('.item-row > select').value;
+    const svc = row.querySelector('.item-svc') ? row.querySelector('.item-svc').value : service;
     const qty = parseInt(row.querySelector('.qty-num').textContent);
     const itemUrgent = row.querySelector('.item-urgent').classList.contains('on');
-    let line = getPrice(item, service) * qty;
+    let line = getPrice(item, svc) * qty;
     if (orderUrgent || itemUrgent) line = line * (1 + urgentSurcharge/100);
     total += line;
   });
@@ -1920,6 +1936,69 @@ async function printReport(){
   w.document.write(html); w.document.close();
 }
 
+async function setCreditLimit(customerId){
+  const A = lang==='ar';
+  const c = customers.find(x=>String(x.id)===String(customerId)); if(!c) return;
+  const cur = parseFloat(c.credit_limit)||0;
+  const val = prompt((A?'حد الائتمان لـ ':'Credit limit for ')+c.name+' (QAR):', cur||'');
+  if (val===null) return;
+  const limit = parseFloat(val)||0;
+  try{
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/customers?id=eq.${customerId}`, {
+      method:'PATCH', headers:{ ...getAuthHeaders(), 'Prefer':'return=minimal' },
+      body: JSON.stringify({ credit_limit: limit })
+    });
+    if(!res.ok) throw new Error();
+    c.credit_limit = limit;
+    showToast(A?'تم حفظ حد الائتمان':'Credit limit saved', false);
+    renderCustomers();
+  } catch{ showToast(A?'فشل الحفظ':'Failed to save', true); }
+}
+
+async function printStatement(phone){
+  const A = lang==='ar';
+  const c = customers.find(x=>x.phone===phone);
+  const custOrders = orders.filter(o=>o.phone===phone).sort((a,b)=>new Date(a.created_at)-new Date(b.created_at));
+  if(!custOrders.length){ showToast(A?'لا توجد طلبات':'No orders for this customer', true); return; }
+  const laundryName = await getLaundryName();
+  let total=0, paid=0;
+  const rows = custOrders.map(o=>{
+    const t=parseFloat(o.price)||0;
+    const p=o.paid?t:(parseFloat(o.amount_paid)||0);
+    total+=t; paid+=p;
+    const d=new Date(o.created_at);
+    const ds=isNaN(d)?'':('0'+d.getDate()).slice(-2)+'/'+('0'+(d.getMonth()+1)).slice(-2)+'/'+d.getFullYear();
+    const num=o.invoice_no?'INV-'+String(o.invoice_no).padStart(4,'0'):'#'+String(o.id).padStart(3,'0');
+    const bal=t-p;
+    return `<tr><td>${num}</td><td>${ds}</td><td>${o.items||''}</td><td style="text-align:right;">${t.toFixed(0)}</td><td style="text-align:right;">${p.toFixed(0)}</td><td style="text-align:right;font-weight:${bal>0.01?'700':'400'};color:${bal>0.01?'#B5352F':'#1D9E75'};">${bal.toFixed(0)}</td></tr>`;
+  }).join('');
+  const balance = total-paid;
+  const html = `<!DOCTYPE html><html dir="${A?'rtl':'ltr'}"><head><meta charset="utf-8"><title>Statement</title>
+  <style>
+    body{font-family:Arial,sans-serif;max-width:800px;margin:24px auto;color:#0C2A3A;padding:0 16px;}
+    h1{font-size:20px;margin:0 0 2px;} .sub{color:#666;font-size:13px;margin-bottom:14px;}
+    table{width:100%;border-collapse:collapse;font-size:12.5px;}
+    th,td{padding:7px 6px;border-bottom:1px solid #eee;text-align:${A?'right':'left'};}
+    th{background:#F4F7F9;font-size:10.5px;text-transform:uppercase;color:#54707E;border-bottom:1.5px solid #cdd8de;}
+    .totals td{font-weight:700;background:#F4F7F9;border-top:1.5px solid #cdd8de;}
+    .foot{text-align:center;color:#999;font-size:11px;margin-top:22px;}
+    @media print{ body{margin:0;} }
+  </style></head><body>
+  <h1>${laundryName}</h1>
+  <div class="sub">${A?'كشف حساب':'Account Statement'} · ${c?c.name:''} · ${phone} · ${new Date().toLocaleDateString('en-GB')}</div>
+  <table>
+    <tr><th>${A?'الفاتورة':'Invoice'}</th><th>${A?'التاريخ':'Date'}</th><th>${A?'الأصناف':'Items'}</th><th style="text-align:right;">${A?'الإجمالي':'Total'}</th><th style="text-align:right;">${A?'مدفوع':'Paid'}</th><th style="text-align:right;">${A?'المتبقي':'Balance'}</th></tr>
+    ${rows}
+    <tr class="totals"><td colspan="3">${A?'الإجمالي':'TOTAL'}</td><td style="text-align:right;">${total.toFixed(0)}</td><td style="text-align:right;">${paid.toFixed(0)}</td><td style="text-align:right;color:${balance>0.01?'#B5352F':'#1D9E75'};">${balance.toFixed(0)}</td></tr>
+  </table>
+  <div class="foot">Powered by Washly</div>
+  <script>window.onload=function(){window.print();}<\/script>
+  </body></html>`;
+  const w = window.open('', '_blank', 'width=900,height=650');
+  if (!w){ showToast(A?'اسمح بالنوافذ المنبثقة':'Allow popups to print', true); return; }
+  w.document.write(html); w.document.close();
+}
+
 async function fetchCustomers() {
   try {
     const laundryId = await getLaundryId();
@@ -1947,11 +2026,18 @@ function renderCustomers() {
     const spent = custOrders.reduce((s,o)=>s+(parseFloat(o.price)||0),0);
     const owed = custOrders.reduce((s,o)=>{const t=parseFloat(o.price)||0;const p=o.paid?t:(parseFloat(o.amount_paid)||0);return s+(t-p);},0);
     const owedHtml = owed>0.01 ? ` · <span style="color:#B5352F;font-weight:600;">${lang==='ar'?'عليه':'owes'} ${owed.toFixed(0)} QAR</span>` : '';
+    const limit = parseFloat(c.credit_limit)||0;
+    const limitHtml = limit>0 ? `<div class="customer-phone">${lang==='ar'?'حد الائتمان':'credit limit'}: ${limit.toFixed(0)} · ${lang==='ar'?'المتبقي':'remaining'}: <span style="font-weight:600;color:${(limit-owed)<0?'#B5352F':'#1D9E75'};">${(limit-owed).toFixed(0)} QAR</span></div>` : '';
     return `<div class="customer-card">
       <div>
         <div class="customer-name">${c.name}</div>
         <div class="customer-phone">${c.phone} · ${lang==='ar'?'آخر طلب':'last order'}: ${lastDate}</div>
         <div class="customer-phone">${lang==='ar'?'إجمالي الصرف':'total spent'}: ${spent.toFixed(0)} QAR${owedHtml}</div>
+        ${limitHtml}
+        <div style="display:flex;gap:6px;margin-top:7px;">
+          <button class="print-btn" style="height:30px;padding:0 10px;font-size:11.5px;" onclick="setCreditLimit('${c.id}')">${lang==='ar'?'حد الائتمان':'Set Limit'}</button>
+          <button class="print-btn" style="height:30px;padding:0 10px;font-size:11.5px;" onclick="printStatement('${c.phone.replace(/'/g,"\\'")}')">${lang==='ar'?'كشف حساب':'Statement'}</button>
+        </div>
       </div>
       <div>
         <div class="customer-orders-count">${count}</div>
