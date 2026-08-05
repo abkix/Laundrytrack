@@ -372,7 +372,7 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield;}
       <div id="items-list"></div>
       <button type="button" class="add-item-btn" onclick="addItemRow()" id="btn-add-item">+ Add Item</button>
     </div>
-    <div class="form-row">
+    <div class="form-row" style="display:none;">
       <label id="lbl-type">Service Type</label>
       <select id="f-type" onchange="updatePipelinePreview();calcOrderTotal()">
         <option value="wash_iron">Wash & Iron</option>
@@ -1849,6 +1849,21 @@ function calcOrderTotal(){
   total -= parseFloat(document.getElementById('f-discount').value)||0;
   if (total < 0) total = 0;
   document.getElementById('f-price').value = total.toFixed(1).replace(/\.0$/,'');
+  // derive order-level service from item jobs (drives pipeline)
+  const svcs = Array.from(rows).map(r => r.querySelector('.item-svc') ? r.querySelector('.item-svc').value : 'wash_iron');
+  if (svcs.length){
+    const needWash = svcs.some(s=>s==='wash_iron'||s==='wash_only');
+    const needIron = svcs.some(s=>s==='wash_iron'||s==='iron_only');
+    const needDC = svcs.some(s=>s==='dry_clean');
+    let derived;
+    if (needDC && !needWash && !needIron) derived='dry_clean';
+    else if (needWash && needIron) derived='wash_iron';
+    else if (needWash) derived='wash_only';
+    else if (needIron) derived='iron_only';
+    else derived='wash_iron';
+    const ft = document.getElementById('f-type');
+    if (ft.value !== derived){ ft.value = derived; updatePipelinePreview(); }
+  }
 }
 
 function toggleDeliveryExtra(){
