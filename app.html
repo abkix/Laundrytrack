@@ -184,9 +184,9 @@ button{font-family:var(--body);}
 .add-item-btn:hover{background:#EEF4F8;}
 .item-block{margin-bottom:8px;}
 .item-row input.item-code{width:46px;flex:0 0 46px;padding:8px 4px;font-size:13px;font-weight:600;text-align:center;border:1px solid var(--line);border-radius:9px;background:#FbFcFd;}
-.item-row select.item-svc{flex:0 0 88px;padding:8px 5px;font-size:12px;}
+.item-row select.item-svc,.item-finish select.item-svc{flex:0 0 auto;width:auto;padding:3px 6px;font-size:11.5px;border:1px solid var(--line);border-radius:999px;background:#fff;color:var(--ink-2);font-weight:500;}
+.item-finish{display:flex;gap:5px;flex-wrap:wrap;padding:5px 0 2px 2px;align-items:center;}
 .item-row input.item-code:focus{outline:none;border-color:var(--brand);box-shadow:0 0 0 3px rgba(46,127,184,.13);background:#fff;}
-.item-finish{display:flex;gap:5px;flex-wrap:wrap;padding:5px 0 2px 2px;}
 .finish-chip{font-size:11px;padding:3px 9px;border:1px solid var(--line);border-radius:999px;background:#fff;color:var(--ink-3);cursor:pointer;transition:.15s;font-weight:500;user-select:none;white-space:nowrap;}
 .finish-chip:hover{border-color:var(--brand);color:var(--brand);}
 .finish-chip.on{background:#EEF4F8;border-color:var(--brand);color:var(--brand-d);font-weight:600;}
@@ -813,7 +813,6 @@ function addItemRow(selectedItem='Thobe', qty=1) {
     <div class="item-row">
       <input type="text" inputmode="numeric" class="item-code" placeholder="#" oninput="setItemByCode('${id}',this.value)" title="${A?'رقم القطعة':'Item code'}">
       <select onchange="calcOrderTotal()">${optgroups}</select>
-      <select class="item-svc" onchange="calcOrderTotal()" title="${A?'الخدمة':'Job'}">${svcOptions}</select>
       <div class="item-qty">
         <button type="button" class="qty-btn" onclick="changeQty('${id}',-1)">−</button>
         <span class="qty-num">${qty}</span>
@@ -822,7 +821,7 @@ function addItemRow(selectedItem='Thobe', qty=1) {
       <button type="button" class="item-urgent" onclick="toggleItemUrgent('${id}')" title="Urgent"><svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M13 2L4 14h6l-1 8 9-12h-6z"/></svg></button>
       <button type="button" class="item-remove" onclick="removeItemRow('${id}')">✕</button>
     </div>
-    <div class="item-finish">${chips}</div>
+    <div class="item-finish"><select class="item-svc" onchange="calcOrderTotal()" title="${A?'الخدمة':'Job'}">${svcOptions}</select>${chips}</div>
   `;
   list.appendChild(div);
   calcOrderTotal();
