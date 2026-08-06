@@ -108,6 +108,12 @@ button{font-family:var(--body);}
 .order-meta{font-size:12.5px;color:var(--ink-2);display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:3px;}
 .urgent-badge{font-size:10px;padding:2px 8px;background:#FBECEC;color:#B5352F;border-radius:999px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;}
 .order-row2{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;}
+.item-pill{display:inline-block;background:#F2F6F8;border:1px solid var(--line);border-radius:7px;padding:2px 8px;font-size:11.5px;color:var(--ink-2);margin:1px 2px 1px 0;white-space:nowrap;}
+.menu-wrap{position:relative;}
+.order-menu{position:absolute;top:40px;inset-inline-end:0;background:#fff;border:1px solid var(--line);border-radius:10px;box-shadow:var(--shadow-lift);z-index:60;min-width:150px;display:none;padding:4px;}
+.order-menu.open{display:block;}
+.order-menu button{display:block;width:100%;text-align:start;padding:8px 12px;border:none;background:none;font-size:13px;border-radius:7px;cursor:pointer;color:var(--ink);font-weight:500;}
+.order-menu button:hover{background:#EEF4F8;}
 
 /* ---------- PIPELINE (signature) ---------- */
 .status-steps{display:flex;align-items:flex-start;}
@@ -1035,13 +1041,19 @@ function renderOrders(){
         <div class="order-num">${o.invoice_no?'INV-'+String(o.invoice_no).padStart(4,'0'):'#'+String(o.id).padStart(3,'0')}</div>
         <div class="order-body">
           <div><div class="order-name">${o.customer_name}</div>
-          <div class="order-meta"><span>${o.items}</span> · <span>${svcLabel}</span> · <span>${colLabel}</span> · <span>${o.order_time}</span>${o.price?` · <span style='color:#27AE60;font-weight:600;'>${o.price} QAR</span>`:''}${(parseFloat(o.discount)||0)>0?` · <span style='color:#C2791A;'>-${o.discount} ${lang==='ar'?'خصم':'disc'}</span>`:''}${o.delivery_date?` · <span style='color:#2E7FB8;'>🚚 ${new Date(o.delivery_date).toLocaleDateString('en-GB')}</span>`:''}${o.invoice_ref?` · <span style='color:#2E7FB8;font-weight:500;'>Ref: ${o.invoice_ref}</span>`:''}${o.priority==='urgent'?` <span class="urgent-badge">${lang==='ar'?'عاجل':'URGENT'}</span>`:''}</div>${o.note?`<div class="order-meta" style="color:#C2791A;">📝 ${o.note}</div>`:''}</div>
+          <div class="order-meta" style="margin-top:5px;">${(o.items||'').split(',').map(s=>s.trim()).filter(Boolean).map(t=>`<span class="item-pill">${t}</span>`).join('')}</div>
+          <div class="order-meta"><span>${svcLabel}</span> · <span>${colLabel}</span> · <span>${o.order_time}</span>${o.price?` · <span style='color:#27AE60;font-weight:600;'>${o.price} QAR</span>`:''}${(parseFloat(o.discount)||0)>0?` · <span style='color:#C2791A;'>-${o.discount} ${lang==='ar'?'خصم':'disc'}</span>`:''}${o.delivery_date?` · <span style='color:#2E7FB8;'>🚚 ${new Date(o.delivery_date).toLocaleDateString('en-GB')}</span>`:''}${o.invoice_ref?` · <span style='color:#2E7FB8;font-weight:500;'>Ref: ${o.invoice_ref}</span>`:''}${o.priority==='urgent'?` <span class="urgent-badge">${lang==='ar'?'عاجل':'URGENT'}</span>`:''}</div>${o.note?`<div class="order-meta" style="color:#C2791A;">📝 ${o.note}</div>`:''}</div>
           <div class="order-row2"><div class="status-steps">${stepsHtml}</div>
           <div class="order-actions">
-            <button class="print-btn" style="padding:0 10px;" onclick="editOrder(${o.id})" title="Edit">✎</button>
-            <button class="print-btn" style="padding:0 10px;color:#B5352F;" onclick="deleteOrder(${o.id})" title="Delete">✕</button>
-            <button class="print-btn" onclick="printTags(${o.id})">${lang==='ar'?'ملصقات':'Tags'}</button>
-            <button class="print-btn" onclick="printReceipt(${o.id})">${lang==='ar'?'طباعة':'Print'}</button>
+            <div class="menu-wrap">
+              <button class="print-btn" style="padding:0 13px;font-size:16px;" onclick="toggleOrderMenu(event,${o.id})">⋯</button>
+              <div class="order-menu" id="menu-${o.id}">
+                <button onclick="closeOrderMenus();editOrder(${o.id})">✎ ${lang==='ar'?'تعديل':'Edit'}</button>
+                <button onclick="closeOrderMenus();printTags(${o.id})">🏷 ${lang==='ar'?'ملصقات':'Tags'}</button>
+                <button onclick="closeOrderMenus();printReceipt(${o.id})">🖨 ${lang==='ar'?'طباعة':'Print'}</button>
+                <button style="color:#B5352F;" onclick="closeOrderMenus();deleteOrder(${o.id})">✕ ${lang==='ar'?'حذف':'Delete'}</button>
+              </div>
+            </div>
             <button class="paid-btn ${paidClass}" onclick="togglePaid(${o.id})">${paidLabel}</button>
             <button class="advance-btn" onclick="advanceOrder(${o.id})" ${isDone?'disabled':''}>${advLabel}</button>
           </div></div>
@@ -1051,6 +1063,18 @@ function renderOrders(){
 
   list.innerHTML = html;
 }
+
+function toggleOrderMenu(e, id){
+  e.stopPropagation();
+  const m = document.getElementById('menu-'+id);
+  const wasOpen = m.classList.contains('open');
+  closeOrderMenus();
+  if (!wasOpen) m.classList.add('open');
+}
+function closeOrderMenus(){
+  document.querySelectorAll('.order-menu.open').forEach(x=>x.classList.remove('open'));
+}
+document.addEventListener('click', closeOrderMenus);
 
 async function printReceipt(id){
   const o = orders.find(x=>x.id===id); if(!o) return;
