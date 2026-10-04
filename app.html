@@ -1034,7 +1034,7 @@ function renderOrders(){
         paidLabel=(lang==='ar'?'✓ مدفوع':'✓ Paid')+(o.payment_method?' · '+payDisplay:'');
         paidClass='paid';
       } else if (isPartial){
-        paidLabel=(lang==='ar'?'عربون':'Deposit')+` ${o.amount_paid} · ${lang==='ar'?'باقي':'left'} ${balanceLeft.toFixed(0)}`;
+        paidLabel=(lang==='ar'?'مدفوع':'Paid')+` ${o.amount_paid} · ${lang==='ar'?'باقي':'left'} ${balanceLeft.toFixed(0)}`;
         paidClass='partial';
       } else {
         paidLabel=(lang==='ar'?'غير مدفوع':'Unpaid');
