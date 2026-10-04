@@ -494,9 +494,9 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield;}
           <input type="number" id="partial-left" readonly placeholder="0" style="flex:1;padding:8px 10px;font-size:14px;border:1px solid var(--line);border-radius:8px;background:#FBECEC;color:#B5352F;font-weight:600;">
         </div>
         <div style="display:flex;gap:6px;margin-bottom:10px;">
-          <button class="pay-opt" style="flex:1;padding:8px;font-size:12px;" data-pm="cash" onclick="setPartialMethod('cash')">💵</button>
-          <button class="pay-opt" style="flex:1;padding:8px;font-size:12px;" data-pm="card" onclick="setPartialMethod('card')">💳</button>
-          <button class="pay-opt" style="flex:1;padding:8px;font-size:12px;" data-pm="bank" onclick="setPartialMethod('bank')">🏦</button>
+          <button class="pay-opt" style="flex:1;padding:8px;font-size:12px;justify-content:center;" data-pm="cash" onclick="setPartialMethod('cash')"><span id="ppm-cash">💵 Cash</span></button>
+          <button class="pay-opt" style="flex:1;padding:8px;font-size:12px;justify-content:center;" data-pm="card" onclick="setPartialMethod('card')"><span id="ppm-card">💳 Card</span></button>
+          <button class="pay-opt" style="flex:1;padding:8px;font-size:12px;justify-content:center;" data-pm="bank" onclick="setPartialMethod('bank')"><span id="ppm-bank">🏦 Bank</span></button>
         </div>
         <button class="btn-submit" style="width:100%;" onclick="savePartial()" id="partial-save-btn">Save Deposit</button>
       </div>
@@ -754,6 +754,9 @@ function setLang(l) {
       document.getElementById('partial-left-lbl').textContent=A?'المتبقي':'Remaining';
       document.getElementById('partial-total-lbl').innerHTML=(A?'إجمالي الطلب: ':'Order total: ')+'<b id="partial-total">'+document.getElementById('partial-total').textContent+'</b> QAR';
       document.getElementById('partial-save-btn').textContent=A?'حفظ العربون':'Save Deposit';
+      document.getElementById('ppm-cash').textContent='💵 '+(A?'كاش':'Cash');
+      document.getElementById('ppm-card').textContent='💳 '+(A?'بطاقة':'Card');
+      document.getElementById('ppm-bank').textContent='🏦 '+(A?'بنك':'Bank');
     } }
   } }
   document.getElementById('lbl-exp-cat').textContent=A?'الفئة':'Category';
